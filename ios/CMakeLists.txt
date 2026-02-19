@@ -18,9 +18,8 @@ if (APPLE)
     add_compile_definitions(
         sincos=__sincos
         sincosf=__sincosf
-        isnanf=__builtin_isnanf
-        isinff=__builtin_isinff
-        isinf=__builtin_isinf
+        isnanf=isnan
+        isinff=isinf
     )
 endif()
 
