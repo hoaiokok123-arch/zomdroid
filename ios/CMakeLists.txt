@@ -50,6 +50,7 @@ if (ZOMDROID_IOS_ENABLE_EMULATION)
             isnanf=isnan
             isinff=isinf
             alloca=__builtin_alloca
+            CLOCK_MONOTONIC_COARSE=CLOCK_MONOTONIC
         )
     endif()
     add_subdirectory(${ZOMDROID_CPP_DIR}/box64 ${CMAKE_CURRENT_BINARY_DIR}/box64)
