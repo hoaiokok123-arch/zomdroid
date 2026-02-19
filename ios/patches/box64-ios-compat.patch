@@ -140,10 +140,10 @@ index a9d73937..a6445074 100644
  #define JUMPBUFF sigjmp_buf
  #else
 diff --git a/src/emu/x86syscall.c b/src/emu/x86syscall.c
-index 0ab60e4f..da20ee8a 100755
+index 0ab60e4f..4fdf1a69 100755
 --- a/src/emu/x86syscall.c
 +++ b/src/emu/x86syscall.c
-@@ -11,7 +11,11 @@
+@@ -11,15 +11,16 @@
  #include <sys/select.h>
  #include <sys/types.h>
  #include <sys/ioctl.h>
@@ -155,11 +155,19 @@ index 0ab60e4f..da20ee8a 100755
  #include <errno.h>
  #include <sched.h>
  #include <sys/wait.h>
+ #include <sys/utsname.h>
+-#ifndef __NR_socketcall
+-#include <linux/net.h>
+ #include <sys/socket.h>
+-#endif
+ #include <sys/resource.h>
+ #include <poll.h>
+ 
 diff --git a/src/emu/x86syscall_32.c b/src/emu/x86syscall_32.c
-index 31f07aad..d88d27e8 100644
+index 31f07aad..2a51957d 100644
 --- a/src/emu/x86syscall_32.c
 +++ b/src/emu/x86syscall_32.c
-@@ -11,7 +11,11 @@
+@@ -11,15 +11,16 @@
  #include <sys/select.h>
  #include <sys/types.h>
  #include <sys/ioctl.h>
@@ -171,6 +179,14 @@ index 31f07aad..d88d27e8 100644
  #include <errno.h>
  #include <sched.h>
  #include <sys/wait.h>
+ #include <sys/utsname.h>
+-#ifndef __NR_socketcall
+-#include <linux/net.h>
+ #include <sys/socket.h>
+-#endif
+ #include <sys/resource.h>
+ #include <poll.h>
+ #include <linux/futex.h> 
 diff --git a/src/libtools/signals.c b/src/libtools/signals.c
 index 9b304e65..cc4137c8 100644
 --- a/src/libtools/signals.c
