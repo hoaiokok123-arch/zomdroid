@@ -46,7 +46,10 @@ target_link_libraries(zomdroid_ios_core
 if (ZOMDROID_IOS_ENABLE_EMULATION)
     set(NOGIT ON)
     set(ARM_DYNAREC ON)
-    add_compile_options($<$<COMPILE_LANGUAGE:C>:-include${ZOMDROID_IOS_MATH_COMPAT_HEADER}>)
+    add_compile_options(
+        $<$<COMPILE_LANGUAGE:C>:-D_XOPEN_SOURCE=700>
+        $<$<COMPILE_LANGUAGE:C>:-include${ZOMDROID_IOS_MATH_COMPAT_HEADER}>
+    )
     add_subdirectory(${ZOMDROID_CPP_DIR}/box64 ${CMAKE_CURRENT_BINARY_DIR}/box64)
     target_sources(box64 PRIVATE Sources/ZomdroidMathCompat.c)
     target_include_directories(box64 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
