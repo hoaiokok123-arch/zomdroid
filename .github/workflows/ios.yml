@@ -28,7 +28,11 @@ jobs:
 
       - name: Build ZomdroidIOSApp (Release)
         run: |
-          cmake --build build-ios --config Release --target ZomdroidIOSApp
+          cmake --build build-ios --config Release --target ZomdroidIOSApp -- \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            DEVELOPMENT_TEAM= \
+            CODE_SIGN_IDENTITY=
 
       - name: Package unsigned .app, .ipa, and .tipa
         run: |

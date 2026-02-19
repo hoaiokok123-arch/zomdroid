@@ -5,6 +5,14 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+if (CMAKE_GENERATOR STREQUAL "Xcode")
+    # CI builds unsigned artifacts (.app/.ipa/.tipa), so disable signing for all generated targets.
+    set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO")
+    set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "NO")
+    set(CMAKE_XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "")
+    set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "")
+endif()
+
 option(ZOMDROID_IOS_ENABLE_EMULATION "Build in-process box64 linker backend (jailbreak/JIT path)" ON)
 option(ZOMDROID_IOS_BUILD_APP "Build iOS app bundle shell" ON)
 
