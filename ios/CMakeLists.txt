@@ -13,12 +13,6 @@ if (CMAKE_GENERATOR STREQUAL "Xcode")
     set(CMAKE_XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "")
 endif()
 
-if (APPLE)
-    set(ZOMDROID_IOS_MATH_COMPAT_HEADER
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/zomdroid_math_compat.h
-    )
-endif()
-
 option(ZOMDROID_IOS_ENABLE_EMULATION "Build in-process box64 linker backend (jailbreak/JIT path)" ON)
 option(ZOMDROID_IOS_BUILD_APP "Build iOS app bundle shell" ON)
 
@@ -47,12 +41,18 @@ if (ZOMDROID_IOS_ENABLE_EMULATION)
     set(NOGIT ON)
     set(ARM_DYNAREC ON)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-    add_compile_options(
-        $<$<COMPILE_LANGUAGE:C>:-D_XOPEN_SOURCE=700>
-        $<$<COMPILE_LANGUAGE:C>:-include${ZOMDROID_IOS_MATH_COMPAT_HEADER}>
-    )
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-D_XOPEN_SOURCE=700>)
+    if (APPLE)
+        # box64 expects GNU extensions that map to Apple private/libSystem equivalents.
+        add_compile_definitions(
+            sincos=__sincos
+            sincosf=__sincosf
+            isnanf=isnan
+            isinff=isinf
+            alloca=__builtin_alloca
+        )
+    endif()
     add_subdirectory(${ZOMDROID_CPP_DIR}/box64 ${CMAKE_CURRENT_BINARY_DIR}/box64)
-    target_sources(box64 PRIVATE Sources/ZomdroidMathCompat.c)
     target_include_directories(box64 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_compile_definitions(box64 PRIVATE BUILD_DYNAMIC)
 
