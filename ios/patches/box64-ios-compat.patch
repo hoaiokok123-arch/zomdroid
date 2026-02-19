@@ -405,6 +405,50 @@ index 9b304e65..cc4137c8 100644
                  siglongjmp(*(JUMPBUFF*)emu->jmpbuf, 2);
                  #else
                  siglongjmp(emu->jmpbuf, 2);
+diff --git a/src/wrapped/wrappedlibrt.c b/src/wrapped/wrappedlibrt.c
+index 438b3312..d4824c63 100644
+--- a/src/wrapped/wrappedlibrt.c
++++ b/src/wrapped/wrappedlibrt.c
+@@ -4,7 +4,7 @@
+ #include <string.h>
+ #include <dlfcn.h>
+ #include <signal.h>
+-#ifndef ANDROID
++#if !defined(ANDROID) && !defined(__APPLE__)
+ #include <aio.h>
+ #else
+ #include <errno.h>
+@@ -69,8 +69,16 @@ static void* findsigev_notifyFct(void* fct)
+ 
+ #undef SUPER
+ 
+-EXPORT int my_timer_create(x64emu_t* emu, uint32_t clockid, void* sevp, timer_t* timerid)
++EXPORT int my_timer_create(x64emu_t* emu, uint32_t clockid, void* sevp, void* timerid)
+ {
++#if defined(__APPLE__)
++    (void)emu;
++    (void)clockid;
++    (void)sevp;
++    (void)timerid;
++    errno = ENOSYS;
++    return -1;
++#else
+     (void)emu;
+     struct sigevent sevent;
+     memcpy(&sevent, sevp, sizeof(sevent));
+@@ -79,9 +87,10 @@ EXPORT int my_timer_create(x64emu_t* emu, uint32_t clockid, void* sevp, timer_t*
+         sevent.sigev_notify_function = findsigev_notifyFct(sevent.sigev_notify_function);
+     }
+ 
+-    return timer_create(clockid, &sevent, timerid);
++    return timer_create(clockid, &sevent, (timer_t*)timerid);
++#endif
+ }
+-#ifndef ANDROID
++#if !defined(ANDROID) && !defined(__APPLE__)
+ EXPORT int my_aio_cancel(x64emu_t emu, int fd, struct aiocb* aiocbp)
+ {
+     if(aiocbp && aiocbp->aio_sigevent.sigev_notify == SIGEV_THREAD)
 diff --git a/src/wrapped/wrappedsdl1.c b/src/wrapped/wrappedsdl1.c
 index 1ffdfac0..bbe1e306 100644
 --- a/src/wrapped/wrappedsdl1.c
