@@ -111,51 +111,6 @@ index a9d73937..a6445074 100644
  #include <setjmp.h>
  #define JUMPBUFF sigjmp_buf
  #else
-diff --git a/src/emu/x64runavx0f.c b/src/emu/x64runavx0f.c
-index 34cfa742..f6b7604e 100644
---- a/src/emu/x64runavx0f.c
-+++ b/src/emu/x64runavx0f.c
-@@ -30,7 +30,7 @@
- 
- #include "modrm.h"
- 
--#ifdef __clang__
-+#if defined(__clang__) && !defined(__APPLE__)
- extern int isinff(float);
- extern int isnanf(float);
- #endif
-diff --git a/src/emu/x64runavxf30f.c b/src/emu/x64runavxf30f.c
-index d712b105..ca115268 100644
---- a/src/emu/x64runavxf30f.c
-+++ b/src/emu/x64runavxf30f.c
-@@ -30,7 +30,7 @@
- 
- #include "modrm.h"
- 
--#ifdef __clang__
-+#if defined(__clang__) && !defined(__APPLE__)
- extern int isinff(float);
- extern int isnanf(float);
- #endif
-diff --git a/src/emu/x64runf30f.c b/src/emu/x64runf30f.c
-index ce69411d..f2a70ba5 100644
---- a/src/emu/x64runf30f.c
-+++ b/src/emu/x64runf30f.c
-@@ -43,10 +43,10 @@ uintptr_t RunF30F(x64emu_t *emu, rex_t rex, uintptr_t addr)
-     x64emu_t*emu = test->emu;
-     #endif
- 
--    #ifdef __clang__
--    extern int isinff(float);
--    extern int isnanf(float);
--    #endif
-+    #if defined(__clang__) && !defined(__APPLE__)
-+    extern int isinff(float);
-+    extern int isnanf(float);
-+    #endif
- 
-     opcode = F8;
- 
 diff --git a/src/libtools/signals.c b/src/libtools/signals.c
 index 9b304e65..cc4137c8 100644
 --- a/src/libtools/signals.c
