@@ -26,19 +26,6 @@ index e900fbec..e9104b33 100644
      // preserve return value
      mov     x3, x0
      // pop regs
-diff --git a/src/dynarec/arm64/arm64_printer.c b/src/dynarec/arm64/arm64_printer.c
-index 66aacec5..6a79d53b 100644
---- a/src/dynarec/arm64/arm64_printer.c
-+++ b/src/dynarec/arm64/arm64_printer.c
-@@ -100,7 +100,7 @@ int64_t signExtend(uint32_t val, int sz)
-     return ret;
- }
- 
--const char* arm64_print(uint32_t opcode, uintptr_t addr)
-+const char* arm64_print(uint32_t opcode, uint64_t addr)
- {
-     static char buff[200];
-     arm64_print_t a;
 diff --git a/src/dynarec/arm64/dynarec_arm64_arch.c b/src/dynarec/arm64/dynarec_arm64_arch.c
 index 020d1d85..844a44af 100644
 --- a/src/dynarec/arm64/dynarec_arm64_arch.c
