@@ -43,6 +43,7 @@ target_include_directories(zomdroid_ios_core
 target_link_libraries(zomdroid_ios_core
     "-framework Foundation"
     "-framework UIKit"
+    "-framework CoreGraphics"
     "-framework QuartzCore"
 )
 
@@ -101,6 +102,7 @@ if (ZOMDROID_IOS_BUILD_APP)
         zomdroid_ios_core
         "-framework Foundation"
         "-framework UIKit"
+        "-framework CoreGraphics"
         "-framework QuartzCore"
         "-framework GameController"
     )
