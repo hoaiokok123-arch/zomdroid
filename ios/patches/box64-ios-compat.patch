@@ -187,6 +187,22 @@ index 31f07aad..2a51957d 100644
  #include <sys/resource.h>
  #include <poll.h>
  #include <linux/futex.h> 
+diff --git a/src/include/myalign.h b/src/include/myalign.h
+index 9b4ff512..a8ad6fc0 100644
+--- a/src/include/myalign.h
++++ b/src/include/myalign.h
+@@ -1,7 +1,11 @@
+ #ifndef __MY_ALIGN__H_
+ #define __MY_ALIGN__H_
+ #include <stdint.h>
++#if defined(__APPLE__)
++#include <time.h>
++#else
+ #include "bits/timespec.h"
++#endif
+ #include "signal.h"
+ 
+ typedef struct x64_va_list_s {
 diff --git a/src/libtools/signals.c b/src/libtools/signals.c
 index 9b304e65..cc4137c8 100644
 --- a/src/libtools/signals.c
