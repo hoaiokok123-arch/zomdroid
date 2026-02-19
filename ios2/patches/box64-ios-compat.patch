@@ -405,6 +405,25 @@ index 9b304e65..cc4137c8 100644
                  siglongjmp(*(JUMPBUFF*)emu->jmpbuf, 2);
                  #else
                  siglongjmp(emu->jmpbuf, 2);
+diff --git a/src/wrapped/wrappedlibgl.c b/src/wrapped/wrappedlibgl.c
+index 8f854e58..1504fbbf 100644
+--- a/src/wrapped/wrappedlibgl.c
++++ b/src/wrapped/wrappedlibgl.c
+@@ -30,7 +30,14 @@ EXPORT void* my_glXGetProcAddress(x64emu_t* emu, void* name)
+     const char* rname = (const char*)name;
+     return getGLProcAddress(emu, my_lib->w.priv, rname);
+ }
++#if defined(__APPLE__)
++EXPORT void* my_glXGetProcAddressARB(x64emu_t* emu, void* name)
++{
++    return my_glXGetProcAddress(emu, name);
++}
++#else
+ EXPORT void* my_glXGetProcAddressARB(x64emu_t* emu, void* name) __attribute__((alias("my_glXGetProcAddress")));
++#endif
+ 
+ typedef int  (*iFi_t)(int);
+ typedef void (*vFpp_t)(void*, void*);
 diff --git a/src/wrapped/wrappedlibm.c b/src/wrapped/wrappedlibm.c
 index 8a7273ec..abc1766f 100644
 --- a/src/wrapped/wrappedlibm.c
