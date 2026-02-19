@@ -127,10 +127,10 @@ index ca0bd4f2..f6b16f1e 100644
              #else
              if((skip=sigsetjmp(emu->jmpbuf, 1)))
 diff --git a/src/emu/x64emu_private.h b/src/emu/x64emu_private.h
-index a9d73937..a6445074 100644
+index a9d73937..e96289c3 100644
 --- a/src/emu/x64emu_private.h
 +++ b/src/emu/x64emu_private.h
-@@ -51,7 +51,7 @@ typedef struct emu_flags_s {
+@@ -51,13 +51,17 @@ typedef struct emu_flags_s {
      uint32_t    jmpbuf_ready:1;   // the jmpbuf in the emu is ok and don't need refresh
  } emu_flags_t;
  
@@ -139,6 +139,16 @@ index a9d73937..a6445074 100644
  #include <setjmp.h>
  #define JUMPBUFF sigjmp_buf
  #else
+ #define JUMPBUFF struct __jmp_buf_tag
+ #endif
+ 
++#if defined(__APPLE__)
++long syscall(long number, ...);
++#endif
++
+ #define N_SCRATCH 200
+ 
+ typedef struct x64emu_s {
 diff --git a/src/emu/x64run_private.c b/src/emu/x64run_private.c
 index 4f3d5b4c..2aa26cf4 100644
 --- a/src/emu/x64run_private.c
