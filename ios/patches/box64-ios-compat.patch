@@ -430,6 +430,35 @@ index 9b304e65..cc4137c8 100644
                  siglongjmp(*(JUMPBUFF*)emu->jmpbuf, 2);
                  #else
                  siglongjmp(emu->jmpbuf, 2);
+diff --git a/src/wrapped/wrappedsdl1.c b/src/wrapped/wrappedsdl1.c
+index 1ffdfac0..bbe1e306 100644
+--- a/src/wrapped/wrappedsdl1.c
++++ b/src/wrapped/wrappedsdl1.c
+@@ -26,6 +26,16 @@ const char* sdl1Name = "libSDL-1.2.so.0";
+ 
+ int sdl_Yes() { return 1; }
+ int sdl_No() { return 0; }
++#if defined(__APPLE__)
++int EXPORT my_SDL_Has3DNow() { return sdl_No(); }
++int EXPORT my_SDL_Has3DNowExt() { return sdl_No(); }
++int EXPORT my_SDL_HasAltiVec() { return sdl_No(); }
++int EXPORT my_SDL_HasMMX() { return sdl_Yes(); }
++int EXPORT my_SDL_HasMMXExt() { return sdl_Yes(); }
++int EXPORT my_SDL_HasRDTSC() { return sdl_Yes(); }
++int EXPORT my_SDL_HasSSE() { return sdl_Yes(); }
++int EXPORT my_SDL_HasSSE2() { return sdl_Yes(); }
++#else
+ int EXPORT my_SDL_Has3DNow() __attribute__((alias("sdl_No")));
+ int EXPORT my_SDL_Has3DNowExt() __attribute__((alias("sdl_No")));
+ int EXPORT my_SDL_HasAltiVec() __attribute__((alias("sdl_No")));
+@@ -34,6 +44,7 @@ int EXPORT my_SDL_HasMMXExt() __attribute__((alias("sdl_Yes")));
+ int EXPORT my_SDL_HasRDTSC() __attribute__((alias("sdl_Yes")));
+ int EXPORT my_SDL_HasSSE() __attribute__((alias("sdl_Yes")));
+ int EXPORT my_SDL_HasSSE2() __attribute__((alias("sdl_Yes")));
++#endif
+ 
+ typedef struct {
+   int32_t freq;
 diff --git a/src/wrapped/wrappedsdl2.c b/src/wrapped/wrappedsdl2.c
 index 483bb51e..72b10b56 100644
 --- a/src/wrapped/wrappedsdl2.c
