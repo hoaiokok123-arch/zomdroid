@@ -32,6 +32,9 @@ jobs:
             -DCMAKE_OSX_ARCHITECTURES=arm64 \
             -DCMAKE_OSX_DEPLOYMENT_TARGET=16.0 \
             -DCMAKE_OSX_SYSROOT=iphoneos \
+            -DARM_DYNAREC=OFF \
+            -DRV64_DYNAREC=OFF \
+            -DLARCH64_DYNAREC=OFF \
             -DZOMDROID_IOS_ENABLE_EMULATION=ON \
             -DZOMDROID_IOS_BUILD_APP=ON
 
