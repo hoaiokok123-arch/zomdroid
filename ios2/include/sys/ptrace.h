@@ -1,8 +1,6 @@
 #ifndef ZOMDROID_IOS_PTRACE_STUB_H
 #define ZOMDROID_IOS_PTRACE_STUB_H
 
-#include <sys/types.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,7 +24,7 @@ extern "C" {
 #define PTRACE_POKEUSER 6
 #endif
 
-long ptrace(int request, pid_t pid, void* addr, void* data);
+long ptrace(int request, int pid, void* addr, void* data);
 
 #ifdef __cplusplus
 }
