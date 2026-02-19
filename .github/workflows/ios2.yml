@@ -1,0 +1,67 @@
+name: iOS2 Build (JIT/Jailbreak Path)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Configure CMake (iOS)
+        run: |
+          cmake -S ios2 -B build-ios2 -G Xcode \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=16.0 \
+            -DCMAKE_OSX_SYSROOT=iphoneos \
+            -DZOMDROID_IOS_ENABLE_EMULATION=OFF \
+            -DZOMDROID_IOS_BUILD_APP=ON
+
+      - name: Build ZomdroidIOSApp (Release)
+        run: |
+          cmake --build build-ios2 --config Release --target ZomdroidIOSApp -- \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            DEVELOPMENT_TEAM= \
+            CODE_SIGN_IDENTITY=
+
+      - name: Package unsigned .app, .ipa, and .tipa
+        run: |
+          APP_PATH="build-ios2/Release-iphoneos/ZomdroidIOSApp.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "App bundle not found at $APP_PATH"
+            exit 1
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" ZomdroidIOS2App-unsigned.zip
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload ZomdroidIOS2App-unsigned.ipa
+          cp ZomdroidIOS2App-unsigned.ipa ZomdroidIOS2App-unsigned.tipa
+
+      - name: Upload app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zomdroid-ios2-app-unsigned
+          path: |
+            ZomdroidIOS2App-unsigned.zip
+            ZomdroidIOS2App-unsigned.ipa
+            ZomdroidIOS2App-unsigned.tipa
+
+      - name: Upload helper files
+        uses: actions/upload-artifact@v4
+        with:
+          name: zomdroid-ios2-helper-files
+          path: |
+            ios2/entitlements.sideload.plist
+            ios2/entitlements.trollstore.plist
+            ios2/Resources/launch_config.example.json
