@@ -399,16 +399,6 @@ static int load_linker_hook() {
 
     return 0;
 #else
-    #ifdef __APPLE__
-    extern int zomdroid_linker_init(void) __attribute__((weak_import));
-    #else
-    extern int zomdroid_linker_init(void) __attribute__((weak));
-    #endif
-    if (zomdroid_linker_init != NULL) {
-        LOGI("Using statically linked linker hook backend");
-        return zomdroid_linker_init();
-    }
-
     const char* explicit_linker = getenv("ZOMDROID_LINKER_LIB");
     const char* candidates[] = {
         explicit_linker,
