@@ -18,7 +18,9 @@ jobs:
 
       - name: Apply box64 iOS compatibility patches
         run: |
-          git -C app/src/main/cpp/box64 apply --whitespace=nowarn "$GITHUB_WORKSPACE/ios/patches/box64-ios-compat.patch"
+          PATCH_FILE="$RUNNER_TEMP/box64-ios-compat.patch"
+          tr -d '\r' < "$GITHUB_WORKSPACE/ios/patches/box64-ios-compat.patch" > "$PATCH_FILE"
+          git -C app/src/main/cpp/box64 apply --whitespace=nowarn "$PATCH_FILE"
 
       - name: Configure CMake (iOS, emulation on)
         run: |
