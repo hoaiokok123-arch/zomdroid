@@ -405,6 +405,19 @@ index 9b304e65..cc4137c8 100644
                  siglongjmp(*(JUMPBUFF*)emu->jmpbuf, 2);
                  #else
                  siglongjmp(emu->jmpbuf, 2);
+diff --git a/src/wrapped/wrappedlibm.c b/src/wrapped/wrappedlibm.c
+index 8a7273ec..abc1766f 100644
+--- a/src/wrapped/wrappedlibm.c
++++ b/src/wrapped/wrappedlibm.c
+@@ -196,7 +196,7 @@ EXPORT float my_nexttowardf(x64emu_t* emu, float val, double to)
+ }
+ #endif
+ 
+-#ifdef ANDROID
++#if defined(ANDROID) || defined(__APPLE__)
+ double my_pow10(double a) { return pow(10.0, a);}
+ float my_pow10f(float a) { return powf(10.0f, a);}
+ long double my_pow10l(long double a) { return powl(10.0, a);}
 diff --git a/src/wrapped/wrappedlibpthread.c b/src/wrapped/wrappedlibpthread.c
 index 1effff50..485f5555 100644
 --- a/src/wrapped/wrappedlibpthread.c
