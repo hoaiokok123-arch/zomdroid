@@ -355,7 +355,7 @@ index 31f07aad..0b4b40da 100644
              int sc = syscallwrap[i].nats;
              switch(syscallwrap[i].nbpars) {
 diff --git a/src/include/myalign.h b/src/include/myalign.h
-index 9b4ff512..47ef39b3 100644
+index 9b4ff512..0d3b9014 100644
 --- a/src/include/myalign.h
 +++ b/src/include/myalign.h
 @@ -1,7 +1,11 @@
@@ -370,7 +370,27 @@ index 9b4ff512..47ef39b3 100644
  #include "signal.h"
  
  typedef struct x64_va_list_s {
-@@ -238,7 +242,7 @@ typedef struct jump_buff_x64_s {
+@@ -54,6 +58,19 @@ typedef struct {
+ 
+ #define PREFER_CONVERT_VAARG
+ 
++#elif defined(__aarch64__) && defined(__APPLE__)
++// Apple arm64 uses a pointer-style va_list layout that does not expose __gr_offs/__vr_offs.
++#define CREATE_SYSV_VALIST(A) \
++  va_list sysv_varargs = (va_list)(A)
++
++#define CONVERT_VALIST(A) \
++  va_list sysv_varargs = (va_list)((A)->overflow_arg_area)
++
++#define CREATE_VALIST_FROM_VAARG(STACK, SCRATCH, N) \
++  va_list sysv_varargs = (va_list)(STACK)
++
++#define PREFER_CONVERT_VAARG
++
+ #elif defined(__aarch64__)
+ // aarch64: 8 64bits general regs and 8 128bits float regs
+ /*
+@@ -238,7 +255,7 @@ typedef struct jump_buff_x64_s {
  typedef struct __jmp_buf_tag_s {
      jump_buff_x64_t __jmpbuf;
      int              __mask_was_saved;
