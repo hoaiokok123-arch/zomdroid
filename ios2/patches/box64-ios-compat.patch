@@ -406,7 +406,7 @@ index 9b304e65..cc4137c8 100644
                  #else
                  siglongjmp(emu->jmpbuf, 2);
 diff --git a/src/wrapped/wrappedlibc.c b/src/wrapped/wrappedlibc.c
-index 5771eb4e..c9eccafd 100644
+index 5771eb4e..39c4c509 100644
 --- a/src/wrapped/wrappedlibc.c
 +++ b/src/wrapped/wrappedlibc.c
 @@ -11,6 +11,9 @@
@@ -429,7 +429,7 @@ index 5771eb4e..c9eccafd 100644
  #undef LOG_INFO
  #undef LOG_DEBUG
  
-@@ -110,6 +116,77 @@ typedef void* (*pFpip_t)(void*, int, void*);
+@@ -110,6 +116,120 @@ typedef void* (*pFpip_t)(void*, int, void*);
  #include "generated/wrappedlibctypes.h"
  
  #include "wrappercallback.h"
@@ -446,6 +446,49 @@ index 5771eb4e..c9eccafd 100644
 +#define nftw64 nftw
 +#define dirent64 dirent
 +#define readdir64 readdir
++typedef off_t off64_t;
++#ifndef SEM_STAT
++#define SEM_STAT 18
++#endif
++#ifndef CLONE_VM
++#define CLONE_VM 0
++#endif
++#ifndef CLONE_VFORK
++#define CLONE_VFORK 0
++#endif
++#ifndef CLONE_SETTLS
++#define CLONE_SETTLS 0
++#endif
++#ifndef CLONE_NEWUSER
++#define CLONE_NEWUSER 0
++#endif
++#ifndef _U
++#define _U 0x01
++#endif
++#ifndef _L
++#define _L 0x02
++#endif
++#ifndef _N
++#define _N 0x04
++#endif
++#ifndef _S
++#define _S 0x08
++#endif
++#ifndef _P
++#define _P 0x10
++#endif
++#ifndef _C
++#define _C 0x20
++#endif
++#ifndef _X
++#define _X 0x40
++#endif
++#ifndef _B
++#define _B 0x80
++#endif
++#ifndef _A
++#define _A (_U|_L)
++#endif
 +extern char** environ;
 +
 +static int box64_scandirat_compat(int dirfd, const char* dirp, struct dirent*** namelist, void* filter, void* compar)
@@ -507,7 +550,7 @@ index 5771eb4e..c9eccafd 100644
  
  static int regs_abi[] = {_DI, _SI, _DX, _CX, _R8, _R9};
  void* getVargN(x64emu_t *emu, int n)
-@@ -546,7 +623,11 @@ pid_t EXPORT my_fork(x64emu_t* emu)
+@@ -546,7 +666,11 @@ pid_t EXPORT my_fork(x64emu_t* emu)
      return v;
      #endif
  }
@@ -519,7 +562,7 @@ index 5771eb4e..c9eccafd 100644
  pid_t EXPORT my_vfork(x64emu_t* emu)
  {
      #if 1
-@@ -600,6 +681,21 @@ int EXPORT my_uname(struct utsname *buf)
+@@ -600,6 +724,21 @@ int EXPORT my_uname(struct utsname *buf)
  #ifndef FMODE_NONOTIFY
  #define FMODE_NONOTIFY 0x4000000
  #endif
@@ -541,7 +584,7 @@ index 5771eb4e..c9eccafd 100644
  
  #define SUPER()     \
      GO(O_WRONLY)    \
-@@ -665,9 +761,15 @@ EXPORT void my__ITM_memcpyRtWn(void * a, const void * b, size_t c) { (void)a; (v
+@@ -665,9 +804,15 @@ EXPORT void my__ITM_memcpyRtWn(void * a, const void * b, size_t c) { (void)a; (v
  EXPORT void my__ITM_memcpyRnWt(void * a, const void * b, size_t c) { (void)a; (void)b; (void)c; printf("warning _ITM_memcpyRnWt called\n"); }
  
  EXPORT void my_longjmp(x64emu_t* emu, /*struct __jmp_buf_tag __env[1]*/void *p, int32_t __val);
@@ -557,7 +600,7 @@ index 5771eb4e..c9eccafd 100644
  
  //EXPORT int32_t my_setjmp(x64emu_t* emu, /*struct __jmp_buf_tag __env[1]*/void *p);
  //EXPORT int32_t my__setjmp(x64emu_t* emu, /*struct __jmp_buf_tag __env[1]*/void *p) __attribute__((alias("my_setjmp")));
-@@ -715,7 +817,11 @@ EXPORT int my_vprintf(x64emu_t *emu, void* fmt, x64_va_list_t b) {
+@@ -715,7 +860,11 @@ EXPORT int my_vprintf(x64emu_t *emu, void* fmt, x64_va_list_t b) {
      #endif
      return vprintf(fmt, VARARGS);
  }
@@ -569,7 +612,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_vfprintf(x64emu_t *emu, void* F, void* fmt, x64_va_list_t b) {
      #ifdef CONVERT_VALIST
-@@ -726,8 +832,13 @@ EXPORT int my_vfprintf(x64emu_t *emu, void* F, void* fmt, x64_va_list_t b) {
+@@ -726,8 +875,13 @@ EXPORT int my_vfprintf(x64emu_t *emu, void* F, void* fmt, x64_va_list_t b) {
      #endif
      return vfprintf(F, fmt, VARARGS);
  }
@@ -583,7 +626,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_fprintf(x64emu_t *emu, void* F, void* fmt, void* b)  {
      myStackAlign(emu, (const char*)fmt, b, emu->scratch, R_EAX, 2);
-@@ -836,7 +947,11 @@ EXPORT int my_snprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, uint64_t
+@@ -836,7 +990,11 @@ EXPORT int my_snprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, uint64_t
      int r = vsnprintf(buff, s, fmt, VARARGS);
      return r;
  }
@@ -595,7 +638,7 @@ index 5771eb4e..c9eccafd 100644
  EXPORT int my___snprintf_chk(x64emu_t* emu, void* buff, size_t s, int flags, size_t maxlen, void * fmt, uint64_t * b)
  {
      (void)flags; (void)maxlen;
-@@ -875,7 +990,11 @@ EXPORT int my_asprintf(x64emu_t* emu, void** buff, void * fmt, uint64_t * b) {
+@@ -875,7 +1033,11 @@ EXPORT int my_asprintf(x64emu_t* emu, void** buff, void * fmt, uint64_t * b) {
      PREPARE_VALIST;
      return vasprintf((char**)buff, (char*)fmt, VARARGS);
  }
@@ -607,7 +650,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_vasprintf(x64emu_t* emu, char** buff, void* fmt, x64_va_list_t b) {
      (void)emu;
-@@ -898,7 +1017,11 @@ EXPORT int my_vsprintf(x64emu_t* emu, void* buff,  void * fmt, x64_va_list_t b)
+@@ -898,7 +1060,11 @@ EXPORT int my_vsprintf(x64emu_t* emu, void* buff,  void * fmt, x64_va_list_t b)
      #endif
      return vsprintf(buff, fmt, VARARGS);
  }
@@ -619,7 +662,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_scanf(x64emu_t* emu, void* fmt, uint64_t* b)
  {
-@@ -932,7 +1055,11 @@ EXPORT int my_vsscanf(x64emu_t* emu, void* stream, void* fmt, x64_va_list_t b)
+@@ -932,7 +1098,11 @@ EXPORT int my_vsscanf(x64emu_t* emu, void* stream, void* fmt, x64_va_list_t b)
      return vsscanf(stream, fmt, VARARGS);
  }
  
@@ -631,7 +674,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_vfwscanf(x64emu_t* emu, void* F, void* fmt, x64_va_list_t b)
  {
-@@ -997,11 +1124,19 @@ EXPORT int my_vscanf(x64emu_t* emu, void* fmt, x64_va_list_t b)
+@@ -997,11 +1167,19 @@ EXPORT int my_vscanf(x64emu_t* emu, void* fmt, x64_va_list_t b)
      return vscanf(fmt, VARARGS);
  }
  
@@ -651,7 +694,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my___isoc99_fscanf(x64emu_t* emu, void* stream, void* fmt, uint64_t* b)
  {
-@@ -1010,7 +1145,11 @@ EXPORT int my___isoc99_fscanf(x64emu_t* emu, void* stream, void* fmt, uint64_t*
+@@ -1010,7 +1188,11 @@ EXPORT int my___isoc99_fscanf(x64emu_t* emu, void* stream, void* fmt, uint64_t*
  
    return vfscanf(stream, fmt, VARARGS);
  }
@@ -663,7 +706,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my___isoc99_scanf(x64emu_t* emu, void* fmt, uint64_t* b)
  {
-@@ -1047,7 +1186,11 @@ EXPORT int my_vsnprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, x64_va_
+@@ -1047,7 +1229,11 @@ EXPORT int my_vsnprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, x64_va_
      int r = vsnprintf(buff, s, fmt, VARARGS);
      return r;
  }
@@ -675,7 +718,7 @@ index 5771eb4e..c9eccafd 100644
  EXPORT int my___vsnprintf_chk(x64emu_t* emu, void* buff, size_t s, int flags, size_t slen, void * fmt, x64_va_list_t b) {
      (void)emu;
      #ifdef CONVERT_VALIST
-@@ -1105,8 +1248,13 @@ EXPORT int my_vswprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, x64_va_
+@@ -1105,8 +1291,13 @@ EXPORT int my_vswprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, x64_va_
      int r = vswprintf(buff, s, fmt, VARARGS);
      return r;
  }
@@ -689,7 +732,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_swscanf(x64emu_t* emu, void* stream, void* fmt, uint64_t* b)
  {
-@@ -1387,7 +1535,11 @@ EXPORT int my_stat(x64emu_t *emu, void* filename, void* buf)
+@@ -1387,7 +1578,11 @@ EXPORT int my_stat(x64emu_t *emu, void* filename, void* buf)
          UnalignStat64(&st, buf);
      return r;
  }
@@ -701,7 +744,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_lstat(x64emu_t *emu, void* filename, void* buf)
  {
-@@ -1398,7 +1550,11 @@ EXPORT int my_lstat(x64emu_t *emu, void* filename, void* buf)
+@@ -1398,7 +1593,11 @@ EXPORT int my_lstat(x64emu_t *emu, void* filename, void* buf)
          UnalignStat64(&st, buf);
      return r;
  }
@@ -713,7 +756,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_fstat(x64emu_t *emu, int fd, void* buf)
  {
-@@ -1409,7 +1565,11 @@ EXPORT int my_fstat(x64emu_t *emu, int fd, void* buf)
+@@ -1409,7 +1608,11 @@ EXPORT int my_fstat(x64emu_t *emu, int fd, void* buf)
          UnalignStat64(&st, buf);
      return r;
  }
@@ -725,7 +768,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_fstatat(x64emu_t *emu, int fd, const char* path, void* buf, int flags)
  {
-@@ -1420,7 +1580,11 @@ EXPORT int my_fstatat(x64emu_t *emu, int fd, const char* path, void* buf, int fl
+@@ -1420,7 +1623,11 @@ EXPORT int my_fstatat(x64emu_t *emu, int fd, const char* path, void* buf, int fl
          UnalignStat64(&st, buf);
      return r;
  }
@@ -737,7 +780,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my__IO_file_stat(x64emu_t* emu, void* f, void* buf)
  {
-@@ -1491,6 +1655,9 @@ static void qsort_r(void* base, size_t nmemb, size_t size, __compar_d_fn_t compa
+@@ -1491,6 +1698,9 @@ static void qsort_r(void* base, size_t nmemb, size_t size, __compar_d_fn_t compa
      return qsort_r_helper(base, size, compar, arg, 0, nmemb - 1);
  }
  #endif
@@ -747,7 +790,7 @@ index 5771eb4e..c9eccafd 100644
  
  typedef struct compare_r_s {
      x64emu_t* emu;
-@@ -1503,17 +1670,31 @@ static int my_compare_r_cb(void* a, void* b, compare_r_t* arg)
+@@ -1503,17 +1713,31 @@ static int my_compare_r_cb(void* a, void* b, compare_r_t* arg)
  {
      return (int)RunFunctionWithEmu(arg->emu, 0, arg->f, 2+arg->r, a, b, arg->data);
  }
@@ -779,7 +822,7 @@ index 5771eb4e..c9eccafd 100644
  }
  EXPORT void* my_bsearch(x64emu_t* emu, void* key, void* base, size_t nmemb, size_t size, void* fnc)
  {
-@@ -1553,7 +1734,12 @@ EXPORT int my_sysctl(x64emu_t* emu, int* name, int nlen, void* oldval, size_t* o
+@@ -1553,7 +1777,12 @@ EXPORT int my_sysctl(x64emu_t* emu, int* name, int nlen, void* oldval, size_t* o
  EXPORT void my_tdestroy(x64emu_t* emu, void* root, void* fnc)
  {
      (void)emu;
@@ -792,7 +835,7 @@ index 5771eb4e..c9eccafd 100644
  }
  EXPORT void* my_tdelete(x64emu_t* emu, void* key, void** root, void* fnc)
  {
-@@ -1948,7 +2134,11 @@ EXPORT int32_t my_open(x64emu_t* emu, void* pathname, int32_t flags, uint32_t mo
+@@ -1948,7 +2177,11 @@ EXPORT int32_t my_open(x64emu_t* emu, void* pathname, int32_t flags, uint32_t mo
      int ret = open(pathname, flags, mode);
      return ret;
  }
@@ -804,7 +847,7 @@ index 5771eb4e..c9eccafd 100644
  
  //#ifdef DYNAREC
  //static int hasDBFromAddress(uintptr_t addr)
-@@ -2145,7 +2335,11 @@ EXPORT FILE* my_fopen64(x64emu_t* emu, const char* path, const char* mode)
+@@ -2145,7 +2378,11 @@ EXPORT FILE* my_fopen64(x64emu_t* emu, const char* path, const char* mode)
      }
      return fopen64(path, mode);
  }
@@ -816,7 +859,7 @@ index 5771eb4e..c9eccafd 100644
  
  #if 0
  EXPORT int32_t my_ftw(x64emu_t* emu, void* pathname, void* B, int32_t nopenfd)
-@@ -2227,15 +2421,23 @@ EXPORT int32_t my_glob64(x64emu_t *emu, void* pat, int32_t flags, void* errfnc,
+@@ -2227,15 +2464,23 @@ EXPORT int32_t my_glob64(x64emu_t *emu, void* pat, int32_t flags, void* errfnc,
      (void)emu;
      return glob64(pat, flags, findgloberrFct(errfnc), pglob);
  }
@@ -840,7 +883,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_scandirat(x64emu_t *emu, int dirfd, void* dirp, void* namelist, void* sel, void* comp)
  {
-@@ -2248,7 +2450,11 @@ EXPORT int my_ftw64(x64emu_t* emu, void* filename, void* func, int descriptors)
+@@ -2248,7 +2493,11 @@ EXPORT int my_ftw64(x64emu_t* emu, void* filename, void* func, int descriptors)
      (void)emu;
      return ftw64(filename, findftw64Fct(func), descriptors);
  }
@@ -852,7 +895,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int32_t my_nftw64(x64emu_t* emu, void* pathname, void* B, int32_t nopenfd, int32_t flags)
  {
-@@ -2798,7 +3004,11 @@ EXPORT int32_t my_fcntl(x64emu_t* emu, int32_t a, int32_t b, void* c)
+@@ -2798,7 +3047,11 @@ EXPORT int32_t my_fcntl(x64emu_t* emu, int32_t a, int32_t b, void* c)
  
      return ret;
  }
@@ -864,7 +907,46 @@ index 5771eb4e..c9eccafd 100644
  
  #if 0
  EXPORT int32_t my_preadv64(x64emu_t* emu, int32_t fd, void* v, int32_t c, int64_t o)
-@@ -3054,7 +3264,11 @@ EXPORT void* my_mmap64(x64emu_t* emu, void *addr, size_t length, int prot, int f
+@@ -2891,9 +3144,38 @@ EXPORT const int32_t *my___ctype_toupper;
+ 
+ void ctSetup()
+ {
++#if defined(__APPLE__)
++    static unsigned short ctype_b[384];
++    static int32_t ctype_tolower[384];
++    static int32_t ctype_toupper[384];
++    static int inited = 0;
++    if(!inited) {
++        inited = 1;
++        for(int i = -128; i < 256; ++i) {
++            int idx = i + 128;
++            unsigned short m = 0;
++            if(isupper((unsigned char)i)) m |= _U;
++            if(islower((unsigned char)i)) m |= _L;
++            if(isalpha((unsigned char)i)) m |= _A;
++            if(isdigit((unsigned char)i)) m |= _N;
++            if(isspace((unsigned char)i)) m |= _S;
++            if(ispunct((unsigned char)i)) m |= _P;
++            if(isxdigit((unsigned char)i)) m |= _X;
++            if(isblank((unsigned char)i)) m |= _B;
++            if(iscntrl((unsigned char)i)) m |= _C;
++            ctype_b[idx] = m;
++            ctype_tolower[idx] = tolower((unsigned char)i);
++            ctype_toupper[idx] = toupper((unsigned char)i);
++        }
++    }
++    my___ctype_b = ctype_b + 128;
++    my___ctype_toupper = ctype_toupper + 128;
++    my___ctype_tolower = ctype_tolower + 128;
++#else
+     my___ctype_b = *(__ctype_b_loc());
+     my___ctype_toupper = *(__ctype_toupper_loc());
+     my___ctype_tolower = *(__ctype_tolower_loc());
++#endif
+ }
+ #endif
+ 
+@@ -3054,11 +3336,24 @@ EXPORT void* my_mmap64(x64emu_t* emu, void *addr, size_t length, int prot, int f
      errno = e;  // preserve errno
      return ret;
  }
@@ -876,7 +958,129 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT void* my_mremap(x64emu_t* emu, void* old_addr, size_t old_size, size_t new_size, int flags, void* new_addr)
  {
-@@ -3799,7 +4013,11 @@ EXPORT void my_exit(x64emu_t* emu, int code)
+     (void)emu;
++#if defined(__APPLE__)
++    (void)old_addr;
++    (void)old_size;
++    (void)new_size;
++    (void)flags;
++    (void)new_addr;
++    errno = ENOSYS;
++    return MAP_FAILED;
++#else
+     if((emu || box64_is32bits) && (BOX64ENV(log)>=LOG_DEBUG || BOX64ENV(dynarec_log)>=LOG_DEBUG)) {printf_log(LOG_NONE, "mremap(%p, %lu, %lu, %d, %p)=>", old_addr, old_size, new_size, flags, new_addr);}
+     void* ret = mremap(old_addr, old_size, new_size, flags, new_addr);
+     if((emu || box64_is32bits) && (BOX64ENV(log)>=LOG_DEBUG || BOX64ENV(dynarec_log)>=LOG_DEBUG)) {printf_log(LOG_NONE, "%p\n", ret);}
+@@ -3104,6 +3399,7 @@ EXPORT void* my_mremap(x64emu_t* emu, void* old_addr, size_t old_size, size_t ne
+         }
+     }
+     return ret;
++#endif
+ }
+ 
+ EXPORT int my_munmap(x64emu_t* emu, void* addr, size_t length)
+@@ -3148,6 +3444,14 @@ EXPORT int my_mprotect(x64emu_t* emu, void *addr, unsigned long len, int prot)
+     return ret;
+ }
+ 
++#if defined(__APPLE__)
++EXPORT void* my_mallinfo(x64emu_t* emu, void* p)
++{
++    (void)emu;
++    memset(p, 0, 10 * sizeof(int));
++    return p;
++}
++#else
+ typedef struct mallinfo (*mallinfo_fnc)(void);
+ EXPORT void* my_mallinfo(x64emu_t* emu, void* p)
+ {
+@@ -3163,6 +3467,7 @@ EXPORT void* my_mallinfo(x64emu_t* emu, void* p)
+         memset(p, 0, sizeof(struct mallinfo));
+     return p;
+ }
++#endif
+ 
+ #ifdef STATICBUILD
+ void my_updateGlobalOpt() {}
+@@ -3232,6 +3537,14 @@ static int my_cookie_close(void *p)
+ }
+ EXPORT void* my_fopencookie(x64emu_t* emu, void* cookie, void* mode, my_cookie_io_functions_t *s)
+ {
++#if defined(__APPLE__)
++    (void)emu;
++    (void)cookie;
++    (void)mode;
++    (void)s;
++    errno = ENOSYS;
++    return NULL;
++#else
+     cookie_io_functions_t io_funcs = {s->read?my_cookie_read:NULL, s->write?my_cookie_write:NULL, s->seek?my_cookie_seek:NULL, my_cookie_close};
+     my_cookie_t *cb = (my_cookie_t*)box_calloc(1, sizeof(my_cookie_t));
+     cb->r = (uintptr_t)s->read;
+@@ -3240,6 +3553,7 @@ EXPORT void* my_fopencookie(x64emu_t* emu, void* cookie, void* mode, my_cookie_i
+     cb->c = (uintptr_t)s->close;
+     cb->cookie = cookie;
+     return fopencookie(cb, mode, io_funcs);
++#endif
+ }
+ #endif
+ 
+@@ -3407,7 +3721,7 @@ EXPORT void my_mcount(void* frompc, void* selfpc)
+ }
+ #endif
+ 
+-#ifndef ANDROID
++#if !defined(ANDROID) && !defined(__APPLE__)
+ union semun {
+   int              val;    /* Value for SETVAL */
+   struct semid_ds *buf;    /* Buffer for IPC_STAT, IPC_SET */
+@@ -3416,6 +3730,9 @@ union semun {
+                               (Linux-specific) */
+ };
+ #endif
++#ifndef SEM_STAT
++#define SEM_STAT 18
++#endif
+ #ifndef SEM_STAT_ANY
+ #define SEM_STAT_ANY 20
+ #endif
+@@ -3633,6 +3950,8 @@ EXPORT int my_stime(x64emu_t* emu, const time_t *t)
+ int GetTID();
+ #ifdef ANDROID
+ void updateGlibcTidCache() {}
++#elif defined(__APPLE__)
++void updateGlibcTidCache() {}
+ #else
+ struct glibc_pthread {
+ #if defined(NO_ALIGN)
+@@ -3698,6 +4017,18 @@ static int clone_fn(void* p)
+ 
+ EXPORT int my_clone(x64emu_t* emu, void* fn, void* stack, int flags, void* args, void* parent, void* tls, void* child)
+ {
++#if defined(__APPLE__)
++    (void)emu;
++    (void)fn;
++    (void)stack;
++    (void)flags;
++    (void)args;
++    (void)parent;
++    (void)tls;
++    (void)child;
++    errno = ENOSYS;
++    return -1;
++#else
+     printf_log(LOG_DEBUG, "my_clone(fn:%p(%s), stack:%p, 0x%x, args:%p, %p, %p, %p)", fn, getAddrFunctionName((uintptr_t)fn), stack, flags, args, parent, tls, child);
+     void* mystack = NULL;
+     clone_arg_t* arg = (clone_arg_t*)box_calloc(1, sizeof(clone_arg_t));
+@@ -3725,6 +4056,7 @@ EXPORT int my_clone(x64emu_t* emu, void* fn, void* stack, int flags, void* args,
+         flags&=~(CLONE_VM|CLONE_VFORK|CLONE_SETTLS);
+     int64_t ret = clone(clone_fn, (void*)((uintptr_t)mystack+1024*1024), flags, arg, parent, NULL, child);
+     return (uintptr_t)ret;
++#endif
+ }
+ 
+ EXPORT void my___cxa_pure_virtual(x64emu_t* emu)
+@@ -3799,7 +4131,11 @@ EXPORT void my_exit(x64emu_t* emu, int code)
      exit(code);
  }
  
@@ -888,7 +1092,7 @@ index 5771eb4e..c9eccafd 100644
  
  EXPORT int my_prctl(x64emu_t* emu, int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5)
  {
-@@ -3834,7 +4052,11 @@ EXPORT long my_sysconf(x64emu_t* emu, int what) {
+@@ -3834,7 +4170,11 @@ EXPORT long my_sysconf(x64emu_t* emu, int what) {
      }
      return sysconf(what);
  }
