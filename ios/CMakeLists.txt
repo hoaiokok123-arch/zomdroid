@@ -14,12 +14,8 @@ if (CMAKE_GENERATOR STREQUAL "Xcode")
 endif()
 
 if (APPLE)
-    # Apple SDKs expose different helper symbols for some GNU math extensions.
-    add_compile_definitions(
-        sincos=__sincos
-        sincosf=__sincosf
-        isnanf=isnan
-        isinff=isinf
+    set(ZOMDROID_IOS_MATH_COMPAT_HEADER
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/zomdroid_math_compat.h
     )
 endif()
 
@@ -50,7 +46,10 @@ target_link_libraries(zomdroid_ios_core
 if (ZOMDROID_IOS_ENABLE_EMULATION)
     set(NOGIT ON)
     set(ARM_DYNAREC ON)
+    add_compile_options($<$<COMPILE_LANGUAGE:C>:-include${ZOMDROID_IOS_MATH_COMPAT_HEADER}>)
     add_subdirectory(${ZOMDROID_CPP_DIR}/box64 ${CMAKE_CURRENT_BINARY_DIR}/box64)
+    target_sources(box64 PRIVATE Sources/ZomdroidMathCompat.c)
+    target_include_directories(box64 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_compile_definitions(box64 PRIVATE BUILD_DYNAMIC)
 
     add_library(zomdroid_ios_linker STATIC
