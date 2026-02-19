@@ -406,7 +406,7 @@ index 9b304e65..cc4137c8 100644
                  #else
                  siglongjmp(emu->jmpbuf, 2);
 diff --git a/src/wrapped/wrappedlibc.c b/src/wrapped/wrappedlibc.c
-index 5771eb4e..ab1073dd 100644
+index 5771eb4e..6d98a232 100644
 --- a/src/wrapped/wrappedlibc.c
 +++ b/src/wrapped/wrappedlibc.c
 @@ -11,6 +11,9 @@
@@ -419,17 +419,25 @@ index 5771eb4e..ab1073dd 100644
  #include <sys/types.h>
  #include <sys/stat.h>
  #include <sys/select.h>
-@@ -42,6 +45,9 @@
+@@ -42,6 +45,17 @@
  #include <sys/prctl.h>
  #include <sys/ptrace.h>
  #include <error.h>
 +#if defined(__APPLE__)
 +#undef reg64_t
 +#endif
++#if defined(__APPLE__)
++#define stat64 stat
++#define fstat64 fstat
++#define lstat64 lstat
++#define fstatat64 fstatat
++#define dirent64 dirent
++#define readdir64 readdir
++#endif
  #undef LOG_INFO
  #undef LOG_DEBUG
  
-@@ -546,7 +552,11 @@ pid_t EXPORT my_fork(x64emu_t* emu)
+@@ -546,7 +560,11 @@ pid_t EXPORT my_fork(x64emu_t* emu)
      return v;
      #endif
  }
@@ -441,7 +449,7 @@ index 5771eb4e..ab1073dd 100644
  pid_t EXPORT my_vfork(x64emu_t* emu)
  {
      #if 1
-@@ -600,6 +610,21 @@ int EXPORT my_uname(struct utsname *buf)
+@@ -600,6 +618,21 @@ int EXPORT my_uname(struct utsname *buf)
  #ifndef FMODE_NONOTIFY
  #define FMODE_NONOTIFY 0x4000000
  #endif
@@ -463,7 +471,7 @@ index 5771eb4e..ab1073dd 100644
  
  #define SUPER()     \
      GO(O_WRONLY)    \
-@@ -665,9 +690,15 @@ EXPORT void my__ITM_memcpyRtWn(void * a, const void * b, size_t c) { (void)a; (v
+@@ -665,9 +698,15 @@ EXPORT void my__ITM_memcpyRtWn(void * a, const void * b, size_t c) { (void)a; (v
  EXPORT void my__ITM_memcpyRnWt(void * a, const void * b, size_t c) { (void)a; (void)b; (void)c; printf("warning _ITM_memcpyRnWt called\n"); }
  
  EXPORT void my_longjmp(x64emu_t* emu, /*struct __jmp_buf_tag __env[1]*/void *p, int32_t __val);
@@ -479,7 +487,7 @@ index 5771eb4e..ab1073dd 100644
  
  //EXPORT int32_t my_setjmp(x64emu_t* emu, /*struct __jmp_buf_tag __env[1]*/void *p);
  //EXPORT int32_t my__setjmp(x64emu_t* emu, /*struct __jmp_buf_tag __env[1]*/void *p) __attribute__((alias("my_setjmp")));
-@@ -715,7 +746,11 @@ EXPORT int my_vprintf(x64emu_t *emu, void* fmt, x64_va_list_t b) {
+@@ -715,7 +754,11 @@ EXPORT int my_vprintf(x64emu_t *emu, void* fmt, x64_va_list_t b) {
      #endif
      return vprintf(fmt, VARARGS);
  }
@@ -491,7 +499,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_vfprintf(x64emu_t *emu, void* F, void* fmt, x64_va_list_t b) {
      #ifdef CONVERT_VALIST
-@@ -726,8 +761,13 @@ EXPORT int my_vfprintf(x64emu_t *emu, void* F, void* fmt, x64_va_list_t b) {
+@@ -726,8 +769,13 @@ EXPORT int my_vfprintf(x64emu_t *emu, void* F, void* fmt, x64_va_list_t b) {
      #endif
      return vfprintf(F, fmt, VARARGS);
  }
@@ -505,7 +513,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_fprintf(x64emu_t *emu, void* F, void* fmt, void* b)  {
      myStackAlign(emu, (const char*)fmt, b, emu->scratch, R_EAX, 2);
-@@ -836,7 +876,11 @@ EXPORT int my_snprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, uint64_t
+@@ -836,7 +884,11 @@ EXPORT int my_snprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, uint64_t
      int r = vsnprintf(buff, s, fmt, VARARGS);
      return r;
  }
@@ -517,7 +525,7 @@ index 5771eb4e..ab1073dd 100644
  EXPORT int my___snprintf_chk(x64emu_t* emu, void* buff, size_t s, int flags, size_t maxlen, void * fmt, uint64_t * b)
  {
      (void)flags; (void)maxlen;
-@@ -875,7 +919,11 @@ EXPORT int my_asprintf(x64emu_t* emu, void** buff, void * fmt, uint64_t * b) {
+@@ -875,7 +927,11 @@ EXPORT int my_asprintf(x64emu_t* emu, void** buff, void * fmt, uint64_t * b) {
      PREPARE_VALIST;
      return vasprintf((char**)buff, (char*)fmt, VARARGS);
  }
@@ -529,7 +537,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_vasprintf(x64emu_t* emu, char** buff, void* fmt, x64_va_list_t b) {
      (void)emu;
-@@ -898,7 +946,11 @@ EXPORT int my_vsprintf(x64emu_t* emu, void* buff,  void * fmt, x64_va_list_t b)
+@@ -898,7 +954,11 @@ EXPORT int my_vsprintf(x64emu_t* emu, void* buff,  void * fmt, x64_va_list_t b)
      #endif
      return vsprintf(buff, fmt, VARARGS);
  }
@@ -541,7 +549,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_scanf(x64emu_t* emu, void* fmt, uint64_t* b)
  {
-@@ -932,7 +984,11 @@ EXPORT int my_vsscanf(x64emu_t* emu, void* stream, void* fmt, x64_va_list_t b)
+@@ -932,7 +992,11 @@ EXPORT int my_vsscanf(x64emu_t* emu, void* stream, void* fmt, x64_va_list_t b)
      return vsscanf(stream, fmt, VARARGS);
  }
  
@@ -553,7 +561,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_vfwscanf(x64emu_t* emu, void* F, void* fmt, x64_va_list_t b)
  {
-@@ -997,11 +1053,19 @@ EXPORT int my_vscanf(x64emu_t* emu, void* fmt, x64_va_list_t b)
+@@ -997,11 +1061,19 @@ EXPORT int my_vscanf(x64emu_t* emu, void* fmt, x64_va_list_t b)
      return vscanf(fmt, VARARGS);
  }
  
@@ -573,7 +581,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my___isoc99_fscanf(x64emu_t* emu, void* stream, void* fmt, uint64_t* b)
  {
-@@ -1010,7 +1074,11 @@ EXPORT int my___isoc99_fscanf(x64emu_t* emu, void* stream, void* fmt, uint64_t*
+@@ -1010,7 +1082,11 @@ EXPORT int my___isoc99_fscanf(x64emu_t* emu, void* stream, void* fmt, uint64_t*
  
    return vfscanf(stream, fmt, VARARGS);
  }
@@ -585,7 +593,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my___isoc99_scanf(x64emu_t* emu, void* fmt, uint64_t* b)
  {
-@@ -1047,7 +1115,11 @@ EXPORT int my_vsnprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, x64_va_
+@@ -1047,7 +1123,11 @@ EXPORT int my_vsnprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, x64_va_
      int r = vsnprintf(buff, s, fmt, VARARGS);
      return r;
  }
@@ -597,7 +605,7 @@ index 5771eb4e..ab1073dd 100644
  EXPORT int my___vsnprintf_chk(x64emu_t* emu, void* buff, size_t s, int flags, size_t slen, void * fmt, x64_va_list_t b) {
      (void)emu;
      #ifdef CONVERT_VALIST
-@@ -1105,8 +1177,13 @@ EXPORT int my_vswprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, x64_va_
+@@ -1105,8 +1185,13 @@ EXPORT int my_vswprintf(x64emu_t* emu, void* buff, size_t s, void * fmt, x64_va_
      int r = vswprintf(buff, s, fmt, VARARGS);
      return r;
  }
@@ -611,7 +619,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_swscanf(x64emu_t* emu, void* stream, void* fmt, uint64_t* b)
  {
-@@ -1387,7 +1464,11 @@ EXPORT int my_stat(x64emu_t *emu, void* filename, void* buf)
+@@ -1387,7 +1472,11 @@ EXPORT int my_stat(x64emu_t *emu, void* filename, void* buf)
          UnalignStat64(&st, buf);
      return r;
  }
@@ -623,7 +631,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_lstat(x64emu_t *emu, void* filename, void* buf)
  {
-@@ -1398,7 +1479,11 @@ EXPORT int my_lstat(x64emu_t *emu, void* filename, void* buf)
+@@ -1398,7 +1487,11 @@ EXPORT int my_lstat(x64emu_t *emu, void* filename, void* buf)
          UnalignStat64(&st, buf);
      return r;
  }
@@ -635,7 +643,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_fstat(x64emu_t *emu, int fd, void* buf)
  {
-@@ -1409,7 +1494,11 @@ EXPORT int my_fstat(x64emu_t *emu, int fd, void* buf)
+@@ -1409,7 +1502,11 @@ EXPORT int my_fstat(x64emu_t *emu, int fd, void* buf)
          UnalignStat64(&st, buf);
      return r;
  }
@@ -647,7 +655,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_fstatat(x64emu_t *emu, int fd, const char* path, void* buf, int flags)
  {
-@@ -1420,7 +1509,11 @@ EXPORT int my_fstatat(x64emu_t *emu, int fd, const char* path, void* buf, int fl
+@@ -1420,7 +1517,11 @@ EXPORT int my_fstatat(x64emu_t *emu, int fd, const char* path, void* buf, int fl
          UnalignStat64(&st, buf);
      return r;
  }
@@ -659,7 +667,49 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my__IO_file_stat(x64emu_t* emu, void* f, void* buf)
  {
-@@ -1948,7 +2041,11 @@ EXPORT int32_t my_open(x64emu_t* emu, void* pathname, int32_t flags, uint32_t mo
+@@ -1491,6 +1592,9 @@ static void qsort_r(void* base, size_t nmemb, size_t size, __compar_d_fn_t compa
+     return qsort_r_helper(base, size, compar, arg, 0, nmemb - 1);
+ }
+ #endif
++#if !defined(ANDROID)
++typedef int (*__compar_d_fn_t)(const void*, const void*, void*);
++#endif
+ 
+ typedef struct compare_r_s {
+     x64emu_t* emu;
+@@ -1503,17 +1607,31 @@ static int my_compare_r_cb(void* a, void* b, compare_r_t* arg)
+ {
+     return (int)RunFunctionWithEmu(arg->emu, 0, arg->f, 2+arg->r, a, b, arg->data);
+ }
++#if defined(__APPLE__)
++static int my_compare_r_cb_apple(void* thunk, const void* a, const void* b)
++{
++    return my_compare_r_cb((void*)a, (void*)b, (compare_r_t*)thunk);
++}
++#endif
+ EXPORT void my_qsort(x64emu_t* emu, void* base, size_t nmemb, size_t size, void* fnc)
+ {
+     compare_r_t args;
+     args.emu = emu; args.f = (uintptr_t)fnc; args.r = 0; args.data = NULL;
++#if defined(__APPLE__)
++    qsort_r(base, nmemb, size, &args, my_compare_r_cb_apple);
++#else
+     qsort_r(base, nmemb, size, (__compar_d_fn_t)my_compare_r_cb, &args);
++#endif
+ }
+ EXPORT void my_qsort_r(x64emu_t* emu, void* base, size_t nmemb, size_t size, void* fnc, void* data)
+ {
+     compare_r_t args;
+     args.emu = emu; args.f = (uintptr_t)fnc; args.r = 1; args.data = data;
++#if defined(__APPLE__)
++    qsort_r(base, nmemb, size, &args, my_compare_r_cb_apple);
++#else
+     qsort_r(base, nmemb, size, (__compar_d_fn_t)my_compare_r_cb, &args);
++#endif
+ }
+ EXPORT void* my_bsearch(x64emu_t* emu, void* key, void* base, size_t nmemb, size_t size, void* fnc)
+ {
+@@ -1948,7 +2066,11 @@ EXPORT int32_t my_open(x64emu_t* emu, void* pathname, int32_t flags, uint32_t mo
      int ret = open(pathname, flags, mode);
      return ret;
  }
@@ -671,7 +721,7 @@ index 5771eb4e..ab1073dd 100644
  
  //#ifdef DYNAREC
  //static int hasDBFromAddress(uintptr_t addr)
-@@ -2145,7 +2242,11 @@ EXPORT FILE* my_fopen64(x64emu_t* emu, const char* path, const char* mode)
+@@ -2145,7 +2267,11 @@ EXPORT FILE* my_fopen64(x64emu_t* emu, const char* path, const char* mode)
      }
      return fopen64(path, mode);
  }
@@ -683,7 +733,7 @@ index 5771eb4e..ab1073dd 100644
  
  #if 0
  EXPORT int32_t my_ftw(x64emu_t* emu, void* pathname, void* B, int32_t nopenfd)
-@@ -2227,15 +2328,23 @@ EXPORT int32_t my_glob64(x64emu_t *emu, void* pat, int32_t flags, void* errfnc,
+@@ -2227,15 +2353,23 @@ EXPORT int32_t my_glob64(x64emu_t *emu, void* pat, int32_t flags, void* errfnc,
      (void)emu;
      return glob64(pat, flags, findgloberrFct(errfnc), pglob);
  }
@@ -707,7 +757,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_scandirat(x64emu_t *emu, int dirfd, void* dirp, void* namelist, void* sel, void* comp)
  {
-@@ -2248,7 +2357,11 @@ EXPORT int my_ftw64(x64emu_t* emu, void* filename, void* func, int descriptors)
+@@ -2248,7 +2382,11 @@ EXPORT int my_ftw64(x64emu_t* emu, void* filename, void* func, int descriptors)
      (void)emu;
      return ftw64(filename, findftw64Fct(func), descriptors);
  }
@@ -719,7 +769,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int32_t my_nftw64(x64emu_t* emu, void* pathname, void* B, int32_t nopenfd, int32_t flags)
  {
-@@ -2798,7 +2911,11 @@ EXPORT int32_t my_fcntl(x64emu_t* emu, int32_t a, int32_t b, void* c)
+@@ -2798,7 +2936,11 @@ EXPORT int32_t my_fcntl(x64emu_t* emu, int32_t a, int32_t b, void* c)
  
      return ret;
  }
@@ -731,7 +781,7 @@ index 5771eb4e..ab1073dd 100644
  
  #if 0
  EXPORT int32_t my_preadv64(x64emu_t* emu, int32_t fd, void* v, int32_t c, int64_t o)
-@@ -3054,7 +3171,11 @@ EXPORT void* my_mmap64(x64emu_t* emu, void *addr, size_t length, int prot, int f
+@@ -3054,7 +3196,11 @@ EXPORT void* my_mmap64(x64emu_t* emu, void *addr, size_t length, int prot, int f
      errno = e;  // preserve errno
      return ret;
  }
@@ -743,7 +793,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT void* my_mremap(x64emu_t* emu, void* old_addr, size_t old_size, size_t new_size, int flags, void* new_addr)
  {
-@@ -3799,7 +3920,11 @@ EXPORT void my_exit(x64emu_t* emu, int code)
+@@ -3799,7 +3945,11 @@ EXPORT void my_exit(x64emu_t* emu, int code)
      exit(code);
  }
  
@@ -755,7 +805,7 @@ index 5771eb4e..ab1073dd 100644
  
  EXPORT int my_prctl(x64emu_t* emu, int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5)
  {
-@@ -3834,7 +3959,11 @@ EXPORT long my_sysconf(x64emu_t* emu, int what) {
+@@ -3834,7 +3984,11 @@ EXPORT long my_sysconf(x64emu_t* emu, int what) {
      }
      return sysconf(what);
  }
