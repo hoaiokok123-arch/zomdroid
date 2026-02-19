@@ -418,10 +418,10 @@ index 9b304e65..3933b11b 100644
                  #else
                  siglongjmp(emu->jmpbuf, 2);
 diff --git a/src/libtools/threads.c b/src/libtools/threads.c
-index 046365d2..a743519e 100644
+index 046365d2..1daa5a1d 100644
 --- a/src/libtools/threads.c
 +++ b/src/libtools/threads.c
-@@ -33,6 +33,106 @@
+@@ -33,6 +33,113 @@
  #include "box32.h"
  #endif
  
@@ -523,12 +523,19 @@ index 046365d2..a743519e 100644
 +static int pthread_barrierattr_init(pthread_barrierattr_t* attr) { (void)attr; return 0; }
 +static int pthread_barrierattr_setpshared(pthread_barrierattr_t* attr, int pshared) { (void)attr; (void)pshared; return 0; }
 +static int pthread_barrier_init(pthread_barrier_t* barrier, const pthread_barrierattr_t* attr, unsigned count) { (void)barrier; (void)attr; (void)count; return ENOSYS; }
++
++static void* box64_dlvsym_compat(void* handle, const char* symbol, const char* version)
++{
++	(void)version;
++	return dlsym(handle, symbol);
++}
++#define dlvsym box64_dlvsym_compat
 +#endif
 +
  //void _pthread_cleanup_push_defer(void* buffer, void* routine, void* arg);	// declare hidden functions
  //void _pthread_cleanup_pop_restore(void* buffer, int exec);
  typedef void (*vFppp_t)(void*, void*, void*);
-@@ -66,8 +166,12 @@ typedef void(*vFv_t)();
+@@ -66,8 +173,12 @@ typedef void(*vFv_t)();
  
  KHASH_MAP_INIT_INT64(threadstack, threadstack_t*)
  #ifndef ANDROID
@@ -541,7 +548,7 @@ index 046365d2..a743519e 100644
  
  void CleanStackSize(box64context_t* context)
  {
-@@ -706,7 +810,11 @@ int EXPORT my_pthread_once(x64emu_t* emu, int* once, void* cb)
+@@ -706,7 +817,11 @@ int EXPORT my_pthread_once(x64emu_t* emu, int* once, void* cb)
  	R_RBP = Pop64(emu);     // pop rbp
  	return 0;
  }
@@ -553,7 +560,7 @@ index 046365d2..a743519e 100644
  
  EXPORT int my_pthread_key_create(x64emu_t* emu, pthread_key_t* key, void* dtor)
  {
-@@ -714,7 +822,11 @@ EXPORT int my_pthread_key_create(x64emu_t* emu, pthread_key_t* key, void* dtor)
+@@ -714,7 +829,11 @@ EXPORT int my_pthread_key_create(x64emu_t* emu, pthread_key_t* key, void* dtor)
  	int ret = pthread_key_create(key, findkey_dtorFct(dtor));
  	return ret;
  }
@@ -565,7 +572,7 @@ index 046365d2..a743519e 100644
  
  EXPORT int my_pthread_key_delete(x64emu_t* emu, pthread_key_t key)
  {
-@@ -868,7 +980,11 @@ EXPORT int my_pthread_mutexattr_destroy(x64emu_t* emu, my_mutexattr_t *attr)
+@@ -868,7 +987,11 @@ EXPORT int my_pthread_mutexattr_destroy(x64emu_t* emu, my_mutexattr_t *attr)
  	attr->x86 = mattr.x86;
  	return ret;
  }
@@ -577,7 +584,7 @@ index 046365d2..a743519e 100644
  EXPORT int my_pthread_mutexattr_getkind_np(x64emu_t* emu, my_mutexattr_t *attr, void* p)
  {
  	my_mutexattr_t mattr = {0};
-@@ -914,7 +1030,11 @@ EXPORT int my_pthread_mutexattr_init(x64emu_t* emu, my_mutexattr_t *attr)
+@@ -914,7 +1037,11 @@ EXPORT int my_pthread_mutexattr_init(x64emu_t* emu, my_mutexattr_t *attr)
  	attr->x86 = mattr.x86;
  	return ret;
  }
@@ -589,7 +596,7 @@ index 046365d2..a743519e 100644
  EXPORT int my_pthread_mutexattr_setkind_np(x64emu_t* emu, my_mutexattr_t *attr, int k)
  {
  	my_mutexattr_t mattr = {0};
-@@ -950,7 +1070,11 @@ EXPORT int my_pthread_mutexattr_settype(x64emu_t* emu, my_mutexattr_t *attr, int
+@@ -950,7 +1077,11 @@ EXPORT int my_pthread_mutexattr_settype(x64emu_t* emu, my_mutexattr_t *attr, int
  	attr->x86 = mattr.x86;
  	return ret;
  }
@@ -601,7 +608,7 @@ index 046365d2..a743519e 100644
  #ifndef ANDROID
  EXPORT int my_pthread_mutexattr_setrobust(x64emu_t* emu, my_mutexattr_t *attr, int t)
  {
-@@ -988,7 +1112,11 @@ EXPORT int my_pthread_mutex_init(pthread_mutex_t *m, my_mutexattr_t *att)
+@@ -988,7 +1119,11 @@ EXPORT int my_pthread_mutex_init(pthread_mutex_t *m, my_mutexattr_t *att)
  	#endif
  	return ret;
  }
