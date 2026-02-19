@@ -3,6 +3,12 @@
 
 #if defined(__APPLE__)
 #include <math.h>
+#include <stddef.h>
+#if __has_include(<alloca.h>)
+#include <alloca.h>
+#else
+void* alloca(size_t size);
+#endif
 
 #ifdef __cplusplus
 extern "C" {
