@@ -140,10 +140,10 @@ index a9d73937..a6445074 100644
  #define JUMPBUFF sigjmp_buf
  #else
 diff --git a/src/emu/x86syscall.c b/src/emu/x86syscall.c
-index 0ab60e4f..4fdf1a69 100755
+index 0ab60e4f..8baaa452 100755
 --- a/src/emu/x86syscall.c
 +++ b/src/emu/x86syscall.c
-@@ -11,15 +11,16 @@
+@@ -11,18 +11,23 @@
  #include <sys/select.h>
  #include <sys/types.h>
  #include <sys/ioctl.h>
@@ -163,11 +163,39 @@ index 0ab60e4f..4fdf1a69 100755
  #include <sys/resource.h>
  #include <poll.h>
  
++#if defined(__APPLE__)
++long syscall(long number, ...);
++#endif
++
+ #include "debug.h"
+ #include "box64stack.h"
+ #include "x64emu.h"
+@@ -141,7 +146,11 @@ static const scwrap_t syscallwrap[] = {
+     //{ 211, __NR_getresgid32, 3 },
+     //{ 220, __NR_getdents64, 3 },
+     //{ 221, __NR_fcntl64, 3 },
++#ifdef __NR_gettid
+     { 224, __NR_gettid, 0 },
++#else
++    { 0, -1, 0 },
++#endif
+     //{ 240, __NR_futex, 6 },
+     //{ 241, __NR_sched_setaffinity, 3 },
+     //{ 242, __NR_sched_getaffinity, 3 },
+@@ -237,6 +246,8 @@ void EXPORT x86Syscall(x64emu_t *emu)
+     // check wrapper first
+     int cnt = sizeof(syscallwrap) / sizeof(scwrap_t);
+     for (int i=0; i<cnt; i++) {
++        if(syscallwrap[i].nats < 0)
++            continue;
+         if(syscallwrap[i].x86s == s) {
+             int sc = syscallwrap[i].nats;
+             switch(syscallwrap[i].nbpars) {
 diff --git a/src/emu/x86syscall_32.c b/src/emu/x86syscall_32.c
-index 31f07aad..2a51957d 100644
+index 31f07aad..0b4b40da 100644
 --- a/src/emu/x86syscall_32.c
 +++ b/src/emu/x86syscall_32.c
-@@ -11,15 +11,16 @@
+@@ -11,19 +11,24 @@
  #include <sys/select.h>
  #include <sys/types.h>
  #include <sys/ioctl.h>
@@ -187,8 +215,72 @@ index 31f07aad..2a51957d 100644
  #include <sys/resource.h>
  #include <poll.h>
  #include <linux/futex.h> 
+ 
++#if defined(__APPLE__)
++long syscall(long number, ...);
++#endif
++
+ #include "debug.h"
+ #include "box64stack.h"
+ #include "x64emu.h"
+@@ -129,7 +134,9 @@ static const scwrap_t syscallwrap[] = {
+     //{ 162, __NR_nanosleep, 2 },
+     //{ 164, __NR_setresuid, 3 },
+     //{ 168, __NR_poll, 3 },    // wrapped to allow SA_RESTART wrapping by libc
++    #ifdef __NR_prctl
+     { 172, __NR_prctl, 5 },
++    #endif
+     //{ 173, __NR_rt_sigreturn, 0 },
+     //{ 175, __NR_rt_sigprocmask, 4 },
+     //{ 179, __NR_rt_sigsuspend, 2 },
+@@ -152,7 +159,9 @@ static const scwrap_t syscallwrap[] = {
+     //{ 211, __NR_getresgid32, 3 },
+     //{ 220, __NR_getdents64, 3 },
+     //{ 221, __NR_fcntl64, 3 },
++    #ifdef __NR_gettid
+     { 224, __NR_gettid, 0 },
++    #endif
+     //{ 240, __NR_futex, 6 },   // needs wrapping for the optionnal timespec part
+     //{ 241, __NR_sched_setaffinity, 3 },
+     //{ 242, __NR_sched_getaffinity, 3 },
+@@ -163,7 +172,9 @@ static const scwrap_t syscallwrap[] = {
+     //{ 256, __NR_epoll_wait, 4 },
+     //{ 265, __NR_clock_gettime, 2 },
+     //{ 266, __NR_clock_getres, 2 },
++    #ifdef __NR_tgkill
+     { 270, __NR_tgkill, 3 },
++    #endif
+     //{ 271, __NR_utimes, 2 },
+     //{ 291, __NR_inotify_init, 0},
+     //{ 292, __NR_inotify_add_watch, 3},
+@@ -178,6 +189,7 @@ static const scwrap_t syscallwrap[] = {
+     //{ 355, __NR_getrandom, 3 },
+     //{ 356, __NR_memfd_create, 2},
+     //{ 449, __NR_futex_waitv, 5},
++    { 0, -1, 0 },
+ };
+ 
+ struct mmap_arg_struct {
+@@ -301,6 +313,8 @@ void EXPORT x86Syscall(x64emu_t *emu)
+     void* tmp;
+     size_t tmps;
+     for (int i=0; i<cnt; i++) {
++        if(syscallwrap[i].nats < 0)
++            continue;
+         if(syscallwrap[i].x86s == s) {
+             int sc = syscallwrap[i].nats;
+             switch(syscallwrap[i].nbpars) {
+@@ -521,6 +535,8 @@ uint32_t EXPORT my32_syscall(x64emu_t *emu, uint32_t s, ptr_t* b)
+     void* tmp;
+     int ret;
+     for (int i=0; i<cnt; i++) {
++        if(syscallwrap[i].nats < 0)
++            continue;
+         if(syscallwrap[i].x86s == s) {
+             int sc = syscallwrap[i].nats;
+             switch(syscallwrap[i].nbpars) {
 diff --git a/src/include/myalign.h b/src/include/myalign.h
-index 9b4ff512..a8ad6fc0 100644
+index 9b4ff512..47ef39b3 100644
 --- a/src/include/myalign.h
 +++ b/src/include/myalign.h
 @@ -1,7 +1,11 @@
@@ -203,6 +295,15 @@ index 9b4ff512..a8ad6fc0 100644
  #include "signal.h"
  
  typedef struct x64_va_list_s {
+@@ -238,7 +242,7 @@ typedef struct jump_buff_x64_s {
+ typedef struct __jmp_buf_tag_s {
+     jump_buff_x64_t __jmpbuf;
+     int              __mask_was_saved;
+-    #ifdef ANDROID
++    #if defined(ANDROID) || defined(__APPLE__)
+     sigset_t         __saved_mask;
+     #else
+     __sigset_t       __saved_mask;
 diff --git a/src/libtools/signals.c b/src/libtools/signals.c
 index 9b304e65..cc4137c8 100644
 --- a/src/libtools/signals.c
