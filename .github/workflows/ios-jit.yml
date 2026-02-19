@@ -16,6 +16,10 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
+      - name: Apply box64 iOS compatibility patches
+        run: |
+          git -C app/src/main/cpp/box64 apply --whitespace=nowarn "$GITHUB_WORKSPACE/ios/patches/box64-ios-compat.patch"
+
       - name: Configure CMake (iOS, emulation on)
         run: |
           cmake -S ios -B build-ios-jit -G Xcode \
