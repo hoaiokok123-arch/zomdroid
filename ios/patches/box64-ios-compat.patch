@@ -405,6 +405,25 @@ index 9b304e65..cc4137c8 100644
                  siglongjmp(*(JUMPBUFF*)emu->jmpbuf, 2);
                  #else
                  siglongjmp(emu->jmpbuf, 2);
+diff --git a/src/wrapped/wrappedlibpthread.c b/src/wrapped/wrappedlibpthread.c
+index 1effff50..485f5555 100644
+--- a/src/wrapped/wrappedlibpthread.c
++++ b/src/wrapped/wrappedlibpthread.c
+@@ -54,7 +54,14 @@ EXPORT int32_t my_pthread_atfork(x64emu_t *emu, void* prepare, void* parent, voi
+     
+     return 0;
+ }
++#if defined(__APPLE__)
++EXPORT int32_t my___pthread_atfork(x64emu_t *emu, void* prepare, void* parent, void* child)
++{
++    return my_pthread_atfork(emu, prepare, parent, child);
++}
++#else
+ EXPORT int32_t my___pthread_atfork(x64emu_t *emu, void* prepare, void* parent, void* child) __attribute__((alias("my_pthread_atfork")));
++#endif
+ 
+ EXPORT void my___pthread_initialize()
+ {
 diff --git a/src/wrapped/wrappedlibrt.c b/src/wrapped/wrappedlibrt.c
 index 438b3312..d4824c63 100644
 --- a/src/wrapped/wrappedlibrt.c
