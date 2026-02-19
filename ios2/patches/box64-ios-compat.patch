@@ -405,6 +405,52 @@ index 9b304e65..cc4137c8 100644
                  siglongjmp(*(JUMPBUFF*)emu->jmpbuf, 2);
                  #else
                  siglongjmp(emu->jmpbuf, 2);
+diff --git a/src/libtools/threads.c b/src/libtools/threads.c
+index 046365d2..24f1f2ab 100644
+--- a/src/libtools/threads.c
++++ b/src/libtools/threads.c
+@@ -66,8 +66,12 @@ typedef void(*vFv_t)();
+ 
+ KHASH_MAP_INIT_INT64(threadstack, threadstack_t*)
+ #ifndef ANDROID
++#if defined(__APPLE__)
++KHASH_MAP_INIT_INT64(cancelthread, x64_unwind_buff_t*)
++#else
+ KHASH_MAP_INIT_INT64(cancelthread, __pthread_unwind_buf_t*)
+ #endif
++#endif
+ 
+ void CleanStackSize(box64context_t* context)
+ {
+diff --git a/src/steam.c b/src/steam.c
+index 5ed2c39c..1ca49f1e 100644
+--- a/src/steam.c
++++ b/src/steam.c
+@@ -93,6 +93,8 @@ void pressure_vessel(int argc, const char** argv, int nextarg, const char* prog)
+         strcat(sniper, "/files");  // this is the sniper root
+         // do LD_LIBRARY_PATH
+         {
++            char tmp[MAX_PATH*4] = {0};
++#if !defined(__APPLE__)
+             const char* usrsbinldconfig = "/usr/sbin/ldconfig";
+             const char* sbinldconfig = "/sbin/ldconfig";
+             const char* ldconfig = "ldconfig";
+@@ -101,7 +103,6 @@ void pressure_vessel(int argc, const char** argv, int nextarg, const char* prog)
+                 ldcmd = usrsbinldconfig;
+             else if(FileExist(sbinldconfig, IS_FILE))
+                 ldcmd = sbinldconfig;
+-            char tmp[MAX_PATH*4] = {0};
+             // prepare folders, using ldconfig
+             snprintf(tmp, sizeof(tmp), "%s -i -n %s/lib/x86_64-linux-gnu", ldcmd, sniper);
+             if(system(tmp)<0) printf_log(LOG_INFO, "%s failed\n", tmp);
+@@ -111,6 +112,7 @@ void pressure_vessel(int argc, const char** argv, int nextarg, const char* prog)
+             if(system(tmp)<0) printf_log(LOG_INFO, "%s failed\n", tmp);
+             snprintf(tmp, sizeof(tmp), "%s -i -n %s/lib64", ldcmd, sniper);
+             if(system(tmp)<0) printf_log(LOG_INFO, "%s failed\n", tmp);
++#endif
+             // setup LD_LIBRARY_PATH
+             const char* ld = getenv("LD_LIBRARY_PATH");
+             snprintf(tmp, sizeof(tmp), "%s/lib/x86_64-linux-gnu:%s/lib/i386-linux-gnu:%s/lib:%s/lib64:%s", sniper, sniper, sniper, sniper, ld?ld:"");
 diff --git a/src/wrapped/wrappedfmodstudio.c b/src/wrapped/wrappedfmodstudio.c
 index db5485c8..c9e0404f 100644
 --- a/src/wrapped/wrappedfmodstudio.c
