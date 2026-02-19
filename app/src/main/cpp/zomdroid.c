@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <stdatomic.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -426,13 +427,13 @@ static int load_linker_hook() {
         return 0;
     }
 
-    int (*zomdroid_linker_init)() = dlsym(linker_handle, "zomdroid_linker_init");
-    if (!zomdroid_linker_init) {
+    int (*linker_init_fn)(void) = (int (*)(void)) dlsym(linker_handle, "zomdroid_linker_init");
+    if (!linker_init_fn) {
         LOGW("zomdroid_linker_init not found in linker library");
         return 0;
     }
 
-    int init_res = zomdroid_linker_init();
+    int init_res = linker_init_fn();
     if (init_res != 0) {
         LOGW("zomdroid_linker_init returned %d", init_res);
     }
@@ -568,9 +569,9 @@ void zomdroid_surface_init(ZomdroidNativeWindow* wnd, int width, int height) {
 
 #define ENQUEUE_EVENT(setup_code)                                     \
     do {                                                              \
-        u_char head = atomic_load_explicit(&g_zomdroid_event_queue.head, memory_order_relaxed);  \
-        u_char tail = atomic_load_explicit(&g_zomdroid_event_queue.tail, memory_order_acquire);  \
-        u_char next = (head + 1) & EVENT_QUEUE_MAX;                   \
+        uint8_t head = atomic_load_explicit(&g_zomdroid_event_queue.head, memory_order_relaxed);  \
+        uint8_t tail = atomic_load_explicit(&g_zomdroid_event_queue.tail, memory_order_acquire);  \
+        uint8_t next = (head + 1) & EVENT_QUEUE_MAX;                  \
         if (next == tail) {                                           \
             break;                                                    \
         }                                                             \
