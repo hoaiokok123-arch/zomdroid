@@ -205,10 +205,10 @@ index 7cb4f934..74b35a44 100644
 +
 +#endif
 diff --git a/src/emu/x86syscall.c b/src/emu/x86syscall.c
-index 0ab60e4f..8baaa452 100755
+index 0ab60e4f..7f8fe384 100755
 --- a/src/emu/x86syscall.c
 +++ b/src/emu/x86syscall.c
-@@ -11,18 +11,23 @@
+@@ -11,15 +11,16 @@
  #include <sys/select.h>
  #include <sys/types.h>
  #include <sys/ioctl.h>
@@ -228,14 +228,7 @@ index 0ab60e4f..8baaa452 100755
  #include <sys/resource.h>
  #include <poll.h>
  
-+#if defined(__APPLE__)
-+long syscall(long number, ...);
-+#endif
-+
- #include "debug.h"
- #include "box64stack.h"
- #include "x64emu.h"
-@@ -141,7 +146,11 @@ static const scwrap_t syscallwrap[] = {
+@@ -141,7 +142,11 @@ static const scwrap_t syscallwrap[] = {
      //{ 211, __NR_getresgid32, 3 },
      //{ 220, __NR_getdents64, 3 },
      //{ 221, __NR_fcntl64, 3 },
@@ -247,7 +240,7 @@ index 0ab60e4f..8baaa452 100755
      //{ 240, __NR_futex, 6 },
      //{ 241, __NR_sched_setaffinity, 3 },
      //{ 242, __NR_sched_getaffinity, 3 },
-@@ -237,6 +246,8 @@ void EXPORT x86Syscall(x64emu_t *emu)
+@@ -237,6 +242,8 @@ void EXPORT x86Syscall(x64emu_t *emu)
      // check wrapper first
      int cnt = sizeof(syscallwrap) / sizeof(scwrap_t);
      for (int i=0; i<cnt; i++) {
@@ -257,10 +250,10 @@ index 0ab60e4f..8baaa452 100755
              int sc = syscallwrap[i].nats;
              switch(syscallwrap[i].nbpars) {
 diff --git a/src/emu/x86syscall_32.c b/src/emu/x86syscall_32.c
-index 31f07aad..0b4b40da 100644
+index 31f07aad..0018d5b5 100644
 --- a/src/emu/x86syscall_32.c
 +++ b/src/emu/x86syscall_32.c
-@@ -11,19 +11,24 @@
+@@ -11,15 +11,16 @@
  #include <sys/select.h>
  #include <sys/types.h>
  #include <sys/ioctl.h>
@@ -280,15 +273,7 @@ index 31f07aad..0b4b40da 100644
  #include <sys/resource.h>
  #include <poll.h>
  #include <linux/futex.h> 
- 
-+#if defined(__APPLE__)
-+long syscall(long number, ...);
-+#endif
-+
- #include "debug.h"
- #include "box64stack.h"
- #include "x64emu.h"
-@@ -129,7 +134,9 @@ static const scwrap_t syscallwrap[] = {
+@@ -129,7 +130,9 @@ static const scwrap_t syscallwrap[] = {
      //{ 162, __NR_nanosleep, 2 },
      //{ 164, __NR_setresuid, 3 },
      //{ 168, __NR_poll, 3 },    // wrapped to allow SA_RESTART wrapping by libc
@@ -298,7 +283,7 @@ index 31f07aad..0b4b40da 100644
      //{ 173, __NR_rt_sigreturn, 0 },
      //{ 175, __NR_rt_sigprocmask, 4 },
      //{ 179, __NR_rt_sigsuspend, 2 },
-@@ -152,7 +159,9 @@ static const scwrap_t syscallwrap[] = {
+@@ -152,7 +155,9 @@ static const scwrap_t syscallwrap[] = {
      //{ 211, __NR_getresgid32, 3 },
      //{ 220, __NR_getdents64, 3 },
      //{ 221, __NR_fcntl64, 3 },
@@ -308,7 +293,7 @@ index 31f07aad..0b4b40da 100644
      //{ 240, __NR_futex, 6 },   // needs wrapping for the optionnal timespec part
      //{ 241, __NR_sched_setaffinity, 3 },
      //{ 242, __NR_sched_getaffinity, 3 },
-@@ -163,7 +172,9 @@ static const scwrap_t syscallwrap[] = {
+@@ -163,7 +168,9 @@ static const scwrap_t syscallwrap[] = {
      //{ 256, __NR_epoll_wait, 4 },
      //{ 265, __NR_clock_gettime, 2 },
      //{ 266, __NR_clock_getres, 2 },
@@ -318,7 +303,7 @@ index 31f07aad..0b4b40da 100644
      //{ 271, __NR_utimes, 2 },
      //{ 291, __NR_inotify_init, 0},
      //{ 292, __NR_inotify_add_watch, 3},
-@@ -178,6 +189,7 @@ static const scwrap_t syscallwrap[] = {
+@@ -178,6 +185,7 @@ static const scwrap_t syscallwrap[] = {
      //{ 355, __NR_getrandom, 3 },
      //{ 356, __NR_memfd_create, 2},
      //{ 449, __NR_futex_waitv, 5},
@@ -326,7 +311,7 @@ index 31f07aad..0b4b40da 100644
  };
  
  struct mmap_arg_struct {
-@@ -301,6 +313,8 @@ void EXPORT x86Syscall(x64emu_t *emu)
+@@ -301,6 +309,8 @@ void EXPORT x86Syscall(x64emu_t *emu)
      void* tmp;
      size_t tmps;
      for (int i=0; i<cnt; i++) {
@@ -335,7 +320,7 @@ index 31f07aad..0b4b40da 100644
          if(syscallwrap[i].x86s == s) {
              int sc = syscallwrap[i].nats;
              switch(syscallwrap[i].nbpars) {
-@@ -521,6 +535,8 @@ uint32_t EXPORT my32_syscall(x64emu_t *emu, uint32_t s, ptr_t* b)
+@@ -521,6 +531,8 @@ uint32_t EXPORT my32_syscall(x64emu_t *emu, uint32_t s, ptr_t* b)
      void* tmp;
      int ret;
      for (int i=0; i<cnt; i++) {
