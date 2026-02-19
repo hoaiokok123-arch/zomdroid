@@ -139,6 +139,38 @@ index a9d73937..a6445074 100644
  #include <setjmp.h>
  #define JUMPBUFF sigjmp_buf
  #else
+diff --git a/src/emu/x86syscall.c b/src/emu/x86syscall.c
+index 0ab60e4f..da20ee8a 100755
+--- a/src/emu/x86syscall.c
++++ b/src/emu/x86syscall.c
+@@ -11,7 +11,11 @@
+ #include <sys/select.h>
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
++#if defined(__APPLE__)
++#include <sys/stat.h>
++#else
+ #include <asm/stat.h>
++#endif
+ #include <errno.h>
+ #include <sched.h>
+ #include <sys/wait.h>
+diff --git a/src/emu/x86syscall_32.c b/src/emu/x86syscall_32.c
+index 31f07aad..d88d27e8 100644
+--- a/src/emu/x86syscall_32.c
++++ b/src/emu/x86syscall_32.c
+@@ -11,7 +11,11 @@
+ #include <sys/select.h>
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
++#if defined(__APPLE__)
++#include <sys/stat.h>
++#else
+ #include <asm/stat.h>
++#endif
+ #include <errno.h>
+ #include <sched.h>
+ #include <sys/wait.h>
 diff --git a/src/libtools/signals.c b/src/libtools/signals.c
 index 9b304e65..cc4137c8 100644
 --- a/src/libtools/signals.c
