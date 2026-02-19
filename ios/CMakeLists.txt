@@ -43,6 +43,7 @@ if (ZOMDROID_IOS_ENABLE_EMULATION)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
     add_compile_options($<$<COMPILE_LANGUAGE:C>:-D_XOPEN_SOURCE=700>)
     if (APPLE)
+        add_compile_options($<$<COMPILE_LANGUAGE:C>:-D_DARWIN_C_SOURCE>)
         # box64 expects GNU extensions that map to Apple private/libSystem equivalents.
         add_compile_definitions(
             sincos=__sincos
