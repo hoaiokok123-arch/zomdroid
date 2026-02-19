@@ -405,6 +405,38 @@ index 9b304e65..cc4137c8 100644
                  siglongjmp(*(JUMPBUFF*)emu->jmpbuf, 2);
                  #else
                  siglongjmp(emu->jmpbuf, 2);
+diff --git a/src/wrapped/wrappedlibdl.c b/src/wrapped/wrappedlibdl.c
+index dd40a1aa..539fb2af 100644
+--- a/src/wrapped/wrappedlibdl.c
++++ b/src/wrapped/wrappedlibdl.c
+@@ -4,7 +4,9 @@
+ #include <string.h>
+ #include <dlfcn.h>
+ #include <elf.h>
++#if !defined(__APPLE__)
+ #include <link.h>
++#endif
+ 
+ #include "wrappedlibs.h"
+ 
+@@ -644,7 +646,7 @@ typedef struct my_dl_find_object_s {
+     uint64_t    dlfo_flags;
+     void*       dlfo_map_start;
+     void*       dlfo_map_end;
+-    struct link_map *dlf_link_map;
++    linkmap_t*  dlf_link_map;
+     void*       dlfo_eh_frame;
+     // other stuff...
+ } my_dl_find_object_t;
+@@ -661,7 +663,7 @@ EXPORT int my__dl_find_object(x64emu_t* emu, void* addr, my_dl_find_object_t* re
+         result->dlfo_map_end = (void*)(start+sz-1);
+         result->dlfo_eh_frame = (void*)(h->ehframehdr+h->delta);
+         result->dlfo_flags = 0;   // unused it seems
+-        result->dlf_link_map = (struct link_map *)getLinkMapElf(h);
++        result->dlf_link_map = getLinkMapElf(h);
+         return 0;
+     }
+     return -1;
 diff --git a/src/wrapped/wrappedlibgl.c b/src/wrapped/wrappedlibgl.c
 index 8f854e58..1504fbbf 100644
 --- a/src/wrapped/wrappedlibgl.c
