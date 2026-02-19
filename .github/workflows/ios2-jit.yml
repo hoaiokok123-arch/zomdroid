@@ -18,7 +18,14 @@ jobs:
 
       - name: Apply box64 iOS compatibility patches
         run: |
-          git -C app/src/main/cpp/box64 apply --3way --whitespace=nowarn "$GITHUB_WORKSPACE/ios2/patches/box64-ios-compat.patch"
+          sed -i '' 's/^[[:space:]]*#ifdef __clang__[[:space:]]*$/#if defined(__clang__) \&\& !defined(__APPLE__)/' \
+            "app/src/main/cpp/box64/src/emu/x64runf30f.c"
+          sed -i '' 's/arm64_print(uint32_t opcode, uintptr_t addr)/arm64_print(uint32_t opcode, uint64_t addr)/' \
+            "app/src/main/cpp/box64/src/dynarec/arm64/arm64_printer.c"
+          git -C app/src/main/cpp/box64 apply --3way --whitespace=nowarn \
+            --exclude=src/emu/x64runf30f.c \
+            --exclude=src/dynarec/arm64/arm64_printer.c \
+            "$GITHUB_WORKSPACE/ios2/patches/box64-ios-compat.patch"
 
       - name: Configure CMake (iOS, emulation on)
         run: |
