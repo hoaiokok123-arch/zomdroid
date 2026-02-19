@@ -139,6 +139,43 @@ index a9d73937..a6445074 100644
  #include <setjmp.h>
  #define JUMPBUFF sigjmp_buf
  #else
+diff --git a/src/emu/x64syscall.c b/src/emu/x64syscall.c
+index 7cb4f934..74b35a44 100644
+--- a/src/emu/x64syscall.c
++++ b/src/emu/x64syscall.c
+@@ -1,3 +1,26 @@
++#if defined(__APPLE__)
++
++#include <errno.h>
++
++#include "debug.h"
++#include "x64emu.h"
++#include "x64emu_private.h"
++
++void EXPORT x64Syscall(x64emu_t *emu)
++{
++    (void)emu;
++    S_RAX = (uint64_t)-ENOSYS;
++}
++
++long EXPORT my_syscall(x64emu_t *emu)
++{
++    (void)emu;
++    errno = ENOSYS;
++    return -1;
++}
++
++#else
++
+ #define _GNU_SOURCE         /* See feature_test_macros(7) */
+ #include <stdint.h>
+ #include <stdio.h>
+@@ -1149,3 +1172,5 @@ long EXPORT my_syscall(x64emu_t *emu)
+     }
+     return 0;
+ }
++
++#endif
 diff --git a/src/emu/x86syscall.c b/src/emu/x86syscall.c
 index 0ab60e4f..8baaa452 100755
 --- a/src/emu/x86syscall.c
