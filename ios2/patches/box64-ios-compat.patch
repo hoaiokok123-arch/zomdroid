@@ -375,10 +375,22 @@ index 9b4ff512..ebfc97a3 100644
      #else
      __sigset_t       __saved_mask;
 diff --git a/src/libtools/signals.c b/src/libtools/signals.c
-index 9b304e65..cc4137c8 100644
+index 9b304e65..3933b11b 100644
 --- a/src/libtools/signals.c
 +++ b/src/libtools/signals.c
-@@ -284,7 +284,7 @@ uintptr_t getX64Address(dynablock_t* db, uintptr_t pc) {return 0;}
+@@ -6,7 +6,11 @@
+ #include <errno.h>
+ #include <string.h>
+ #include <unistd.h>
++#if defined(__APPLE__)
++#include <sys/syscall.h>
++#else
+ #include <syscall.h>
++#endif
+ #include <stddef.h>
+ #include <stdarg.h>
+ #include <ucontext.h>
+@@ -284,7 +288,7 @@ uintptr_t getX64Address(dynablock_t* db, uintptr_t pc) {return 0;}
  
  // this allow handling "safe" function that just abort if accessing a bad address
  static __thread JUMPBUFF signal_jmpbuf;
@@ -387,7 +399,7 @@ index 9b304e65..cc4137c8 100644
  #define SIG_JMPBUF signal_jmpbuf
  #else
  #define SIG_JMPBUF &signal_jmpbuf
-@@ -1394,7 +1394,7 @@ void my_sigactionhandler_oldcode_64(x64emu_t* emu, int32_t sig, int simple, sigi
+@@ -1394,7 +1398,7 @@ void my_sigactionhandler_oldcode_64(x64emu_t* emu, int32_t sig, int simple, sigi
              #ifdef RV64
              emu->xSPSave = emu->old_savedsp;
              #endif
@@ -396,7 +408,7 @@ index 9b304e65..cc4137c8 100644
              siglongjmp(*emu->jmpbuf, 1);
              #else
              siglongjmp(emu->jmpbuf, 1);
-@@ -1683,7 +1683,7 @@ void my_box64signalhandler(int32_t sig, siginfo_t* info, void * ucntx)
+@@ -1683,7 +1687,7 @@ void my_box64signalhandler(int32_t sig, siginfo_t* info, void * ucntx)
                  if(Locks & is_dyndump_locked)
                      CancelBlock64(1);
                  emu->test.clean = 0;
@@ -406,10 +418,81 @@ index 9b304e65..cc4137c8 100644
                  #else
                  siglongjmp(emu->jmpbuf, 2);
 diff --git a/src/libtools/threads.c b/src/libtools/threads.c
-index 046365d2..24f1f2ab 100644
+index 046365d2..9dffeeef 100644
 --- a/src/libtools/threads.c
 +++ b/src/libtools/threads.c
-@@ -66,8 +66,12 @@ typedef void(*vFv_t)();
+@@ -33,6 +33,70 @@
+ #include "box32.h"
+ #endif
+ 
++#if defined(__APPLE__)
++#ifndef MAP_GROWSDOWN
++#define MAP_GROWSDOWN 0
++#endif
++#define mmap64 mmap
++
++static int box64_pthread_attr_setaffinity_np_compat(pthread_attr_t* attr, size_t cpusize, void* cpuset)
++{
++	(void)attr;
++	(void)cpusize;
++	(void)cpuset;
++	return ENOSYS;
++}
++#define pthread_attr_setaffinity_np box64_pthread_attr_setaffinity_np_compat
++
++static int box64_pthread_getattr_np_compat(pthread_t thread_id, pthread_attr_t* attr)
++{
++	(void)thread_id;
++	(void)attr;
++	return ENOSYS;
++}
++#define pthread_getattr_np box64_pthread_getattr_np_compat
++
++static int box64_pthread_getattr_default_np_compat(pthread_attr_t* attr)
++{
++	(void)attr;
++	return ENOSYS;
++}
++#define pthread_getattr_default_np box64_pthread_getattr_default_np_compat
++
++static int box64_pthread_setattr_default_np_compat(const pthread_attr_t* attr)
++{
++	(void)attr;
++	return ENOSYS;
++}
++#define pthread_setattr_default_np box64_pthread_setattr_default_np_compat
++
++static int box64_pthread_getaffinity_np_compat(pthread_t thread, size_t cpusetsize, void* cpuset)
++{
++	(void)thread;
++	(void)cpusetsize;
++	(void)cpuset;
++	return ENOSYS;
++}
++#define pthread_getaffinity_np box64_pthread_getaffinity_np_compat
++
++static int box64_pthread_setaffinity_np_compat(pthread_t thread, size_t cpusetsize, const void* cpuset)
++{
++	(void)thread;
++	(void)cpusetsize;
++	(void)cpuset;
++	return ENOSYS;
++}
++#define pthread_setaffinity_np box64_pthread_setaffinity_np_compat
++
++static int box64_pthread_mutexattr_getrobust_compat(const pthread_mutexattr_t* attr, void* robust)
++{
++	(void)attr;
++	(void)robust;
++	return ENOSYS;
++}
++#define pthread_mutexattr_getrobust box64_pthread_mutexattr_getrobust_compat
++#endif
++
+ //void _pthread_cleanup_push_defer(void* buffer, void* routine, void* arg);	// declare hidden functions
+ //void _pthread_cleanup_pop_restore(void* buffer, int exec);
+ typedef void (*vFppp_t)(void*, void*, void*);
+@@ -66,8 +130,12 @@ typedef void(*vFv_t)();
  
  KHASH_MAP_INIT_INT64(threadstack, threadstack_t*)
  #ifndef ANDROID
@@ -422,6 +505,78 @@ index 046365d2..24f1f2ab 100644
  
  void CleanStackSize(box64context_t* context)
  {
+@@ -706,7 +774,11 @@ int EXPORT my_pthread_once(x64emu_t* emu, int* once, void* cb)
+ 	R_RBP = Pop64(emu);     // pop rbp
+ 	return 0;
+ }
++#if defined(__APPLE__)
++EXPORT int my___pthread_once(x64emu_t* emu, void* once, void* cb) { return my_pthread_once(emu, once, cb); }
++#else
+ EXPORT int my___pthread_once(x64emu_t* emu, void* once, void* cb) __attribute__((alias("my_pthread_once")));
++#endif
+ 
+ EXPORT int my_pthread_key_create(x64emu_t* emu, pthread_key_t* key, void* dtor)
+ {
+@@ -714,7 +786,11 @@ EXPORT int my_pthread_key_create(x64emu_t* emu, pthread_key_t* key, void* dtor)
+ 	int ret = pthread_key_create(key, findkey_dtorFct(dtor));
+ 	return ret;
+ }
++#if defined(__APPLE__)
++EXPORT int my___pthread_key_create(x64emu_t* emu, pthread_key_t* key, void* dtor) { return my_pthread_key_create(emu, key, dtor); }
++#else
+ EXPORT int my___pthread_key_create(x64emu_t* emu, pthread_key_t* key, void* dtor) __attribute__((alias("my_pthread_key_create")));
++#endif
+ 
+ EXPORT int my_pthread_key_delete(x64emu_t* emu, pthread_key_t key)
+ {
+@@ -868,7 +944,11 @@ EXPORT int my_pthread_mutexattr_destroy(x64emu_t* emu, my_mutexattr_t *attr)
+ 	attr->x86 = mattr.x86;
+ 	return ret;
+ }
++#if defined(__APPLE__)
++EXPORT int my___pthread_mutexattr_destroy(x64emu_t* emu, my_mutexattr_t *attr) { return my_pthread_mutexattr_destroy(emu, attr); }
++#else
+ EXPORT int my___pthread_mutexattr_destroy(x64emu_t* emu, my_mutexattr_t *attr) __attribute__((alias("my_pthread_mutexattr_destroy")));
++#endif
+ EXPORT int my_pthread_mutexattr_getkind_np(x64emu_t* emu, my_mutexattr_t *attr, void* p)
+ {
+ 	my_mutexattr_t mattr = {0};
+@@ -914,7 +994,11 @@ EXPORT int my_pthread_mutexattr_init(x64emu_t* emu, my_mutexattr_t *attr)
+ 	attr->x86 = mattr.x86;
+ 	return ret;
+ }
++#if defined(__APPLE__)
++EXPORT int my___pthread_mutexattr_init(x64emu_t* emu, my_mutexattr_t *attr) { return my_pthread_mutexattr_init(emu, attr); }
++#else
+ EXPORT int my___pthread_mutexattr_init(x64emu_t* emu, my_mutexattr_t *attr) __attribute__((alias("my_pthread_mutexattr_init")));
++#endif
+ EXPORT int my_pthread_mutexattr_setkind_np(x64emu_t* emu, my_mutexattr_t *attr, int k)
+ {
+ 	my_mutexattr_t mattr = {0};
+@@ -950,7 +1034,11 @@ EXPORT int my_pthread_mutexattr_settype(x64emu_t* emu, my_mutexattr_t *attr, int
+ 	attr->x86 = mattr.x86;
+ 	return ret;
+ }
++#if defined(__APPLE__)
++EXPORT int my___pthread_mutexattr_settype(x64emu_t* emu, my_mutexattr_t *attr, int t) { return my_pthread_mutexattr_settype(emu, attr, t); }
++#else
+ EXPORT int my___pthread_mutexattr_settype(x64emu_t* emu, my_mutexattr_t *attr, int t) __attribute__((alias("my_pthread_mutexattr_settype")));
++#endif
+ #ifndef ANDROID
+ EXPORT int my_pthread_mutexattr_setrobust(x64emu_t* emu, my_mutexattr_t *attr, int t)
+ {
+@@ -988,7 +1076,11 @@ EXPORT int my_pthread_mutex_init(pthread_mutex_t *m, my_mutexattr_t *att)
+ 	#endif
+ 	return ret;
+ }
++#if defined(__APPLE__)
++EXPORT int my___pthread_mutex_init(pthread_mutex_t *m, my_mutexattr_t *att) { return my_pthread_mutex_init(m, att); }
++#else
+ EXPORT int my___pthread_mutex_init(pthread_mutex_t *m, my_mutexattr_t *att) __attribute__((alias("my_pthread_mutex_init")));
++#endif
+ 
+ typedef union my_condattr_s {
+ 	int					x86;
 diff --git a/src/steam.c b/src/steam.c
 index 5ed2c39c..1ca49f1e 100644
 --- a/src/steam.c
