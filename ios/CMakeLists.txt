@@ -46,6 +46,7 @@ target_link_libraries(zomdroid_ios_core
 if (ZOMDROID_IOS_ENABLE_EMULATION)
     set(NOGIT ON)
     set(ARM_DYNAREC ON)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
     add_compile_options(
         $<$<COMPILE_LANGUAGE:C>:-D_XOPEN_SOURCE=700>
         $<$<COMPILE_LANGUAGE:C>:-include${ZOMDROID_IOS_MATH_COMPAT_HEADER}>
