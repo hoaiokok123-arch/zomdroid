@@ -1,0 +1,63 @@
+name: iOS Build (JIT/Jailbreak Path)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build-ios:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Configure CMake (iOS)
+        run: |
+          cmake -S ios -B build-ios -G Xcode \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=16.0 \
+            -DCMAKE_OSX_SYSROOT=iphoneos \
+            -DZOMDROID_IOS_ENABLE_EMULATION=ON \
+            -DZOMDROID_IOS_BUILD_APP=ON
+
+      - name: Build ZomdroidIOSApp (Release)
+        run: |
+          cmake --build build-ios --config Release --target ZomdroidIOSApp
+
+      - name: Package unsigned .app, .ipa, and .tipa
+        run: |
+          APP_PATH="build-ios/Release-iphoneos/ZomdroidIOSApp.app"
+          if [ ! -d "$APP_PATH" ]; then
+            echo "App bundle not found at $APP_PATH"
+            exit 1
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" ZomdroidIOSApp-unsigned.zip
+          rm -rf Payload
+          mkdir -p Payload
+          cp -R "$APP_PATH" Payload/
+          ditto -c -k --sequesterRsrc --keepParent Payload ZomdroidIOSApp-unsigned.ipa
+          cp ZomdroidIOSApp-unsigned.ipa ZomdroidIOSApp-unsigned.tipa
+
+      - name: Upload app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zomdroid-ios-app-unsigned
+          path: |
+            ZomdroidIOSApp-unsigned.zip
+            ZomdroidIOSApp-unsigned.ipa
+            ZomdroidIOSApp-unsigned.tipa
+
+      - name: Upload helper files
+        uses: actions/upload-artifact@v4
+        with:
+          name: zomdroid-ios-helper-files
+          path: |
+            ios/entitlements.sideload.plist
+            ios/entitlements.trollstore.plist
+            ios/Resources/launch_config.example.json

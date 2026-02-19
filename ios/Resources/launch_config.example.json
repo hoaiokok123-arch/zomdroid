@@ -1,0 +1,22 @@
+{
+  "game_dir": "/var/mobile/Documents/zomdroid/instances/default/game",
+  "library_dir": "/var/mobile/Documents/zomdroid/runtime",
+  "main_class": "zombie/gameStates/MainScreenState",
+  "renderer": "GL4ES",
+  "jvm_library_path": "/var/mobile/Documents/zomdroid/runtime/jre/lib/server/libjvm.dylib",
+  "linker_library_path": "/var/mobile/Documents/zomdroid/runtime/libzomdroidlinker.dylib",
+  "jvm_args": [
+    "-Duser.home=/var/mobile/Documents/zomdroid/instances/default",
+    "-Djava.io.tmpdir=/var/mobile/Documents/zomdroid/cache",
+    "-Djava.library.path=/var/mobile/Documents/zomdroid/runtime/libs:.",
+    "-Djava.class.path=/var/mobile/Documents/zomdroid/runtime/zomboid.jar"
+  ],
+  "game_args": [],
+  "env": [
+    "BOX64_LOG=1",
+    "BOX64_SHOWBT=1",
+    "BOX64_LD_LIBRARY_PATH=/var/mobile/Documents/zomdroid/runtime/libs",
+    "ZOMDROID_CACHE_DIR=/var/mobile/Documents/zomdroid/cache"
+  ]
+}
+
