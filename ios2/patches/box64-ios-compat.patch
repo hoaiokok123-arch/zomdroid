@@ -405,6 +405,19 @@ index 9b304e65..cc4137c8 100644
                  siglongjmp(*(JUMPBUFF*)emu->jmpbuf, 2);
                  #else
                  siglongjmp(emu->jmpbuf, 2);
+diff --git a/src/wrapped/wrappedfmodstudio.c b/src/wrapped/wrappedfmodstudio.c
+index db5485c8..c9e0404f 100644
+--- a/src/wrapped/wrappedfmodstudio.c
++++ b/src/wrapped/wrappedfmodstudio.c
+@@ -225,7 +225,7 @@ static int init_fmod_symbols() {
+     return 1;
+ }
+ 
+-FMOD_RESULT my__ZN4FMOD6Studio6System6createEPPS1_j(void** this, uint some_arg) {
++FMOD_RESULT my__ZN4FMOD6Studio6System6createEPPS1_j(void** this, unsigned int some_arg) {
+     static int once = 1;
+     static int init = 0;
+ 
 diff --git a/src/wrapped/wrappedlibc.c b/src/wrapped/wrappedlibc.c
 index 5771eb4e..39c4c509 100644
 --- a/src/wrapped/wrappedlibc.c
