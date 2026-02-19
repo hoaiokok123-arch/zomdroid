@@ -406,7 +406,7 @@ index 9b304e65..cc4137c8 100644
                  #else
                  siglongjmp(emu->jmpbuf, 2);
 diff --git a/src/wrapped/wrappedlibdl.c b/src/wrapped/wrappedlibdl.c
-index dd40a1aa..539fb2af 100644
+index dd40a1aa..70230b0e 100644
 --- a/src/wrapped/wrappedlibdl.c
 +++ b/src/wrapped/wrappedlibdl.c
 @@ -4,7 +4,9 @@
@@ -419,7 +419,22 @@ index dd40a1aa..539fb2af 100644
  
  #include "wrappedlibs.h"
  
-@@ -644,7 +646,7 @@ typedef struct my_dl_find_object_s {
+@@ -478,14 +480,12 @@ int my_dlclose(x64emu_t* emu, void *handle)
+         DecRefCount(&dl->dllibs[nlib].lib, emu);
+     return 0;
+ }
+-#ifdef ANDROID
+ #ifndef RTLD_DL_SYMENT
+ #define RTLD_DL_SYMENT 1
+ #endif
+ #ifndef RTLD_DL_LINKMAP
+ #define RTLD_DL_LINKMAP 2
+ #endif
+-#endif
+ 
+ int my_dladdr1(x64emu_t* emu, void *addr, void *i, void** extra_info, int flags)
+ {
+@@ -644,7 +644,7 @@ typedef struct my_dl_find_object_s {
      uint64_t    dlfo_flags;
      void*       dlfo_map_start;
      void*       dlfo_map_end;
@@ -428,7 +443,7 @@ index dd40a1aa..539fb2af 100644
      void*       dlfo_eh_frame;
      // other stuff...
  } my_dl_find_object_t;
-@@ -661,7 +663,7 @@ EXPORT int my__dl_find_object(x64emu_t* emu, void* addr, my_dl_find_object_t* re
+@@ -661,7 +661,7 @@ EXPORT int my__dl_find_object(x64emu_t* emu, void* addr, my_dl_find_object_t* re
          result->dlfo_map_end = (void*)(start+sz-1);
          result->dlfo_eh_frame = (void*)(h->ehframehdr+h->delta);
          result->dlfo_flags = 0;   // unused it seems
