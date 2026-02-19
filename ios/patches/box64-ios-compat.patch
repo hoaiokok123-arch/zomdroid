@@ -430,3 +430,47 @@ index 9b304e65..cc4137c8 100644
                  siglongjmp(*(JUMPBUFF*)emu->jmpbuf, 2);
                  #else
                  siglongjmp(emu->jmpbuf, 2);
+diff --git a/src/wrapped/wrappedsdl2.c b/src/wrapped/wrappedsdl2.c
+index 483bb51e..72b10b56 100644
+--- a/src/wrapped/wrappedsdl2.c
++++ b/src/wrapped/wrappedsdl2.c
+@@ -32,6 +32,19 @@ void* my_dlsym(x64emu_t* emu, void *handle, void *symbol);
+ 
+ static int sdl_Yes() { return 1;}
+ static int sdl_No() { return 0;}
++#if defined(__APPLE__)
++int EXPORT my2_SDL_Has3DNow(void) { return sdl_No(); }
++int EXPORT my2_SDL_Has3DNowExt(void) { return sdl_No(); }
++int EXPORT my2_SDL_HasAltiVec(void) { return sdl_No(); }
++int EXPORT my2_SDL_HasMMX(void) { return sdl_Yes(); }
++int EXPORT my2_SDL_HasMMXExt(void) { return sdl_Yes(); }
++int EXPORT my2_SDL_HasNEON(void) { return sdl_No(); }   // No neon in x86_64 ;)
++int EXPORT my2_SDL_HasRDTSC(void) { return sdl_Yes(); }
++int EXPORT my2_SDL_HasSSE(void) { return sdl_Yes(); }
++int EXPORT my2_SDL_HasSSE2(void) { return sdl_Yes(); }
++int EXPORT my2_SDL_HasSSE3(void) { return sdl_Yes(); }
++int EXPORT my2_SDL_HasSSE41(void) { return sdl_Yes(); }
++#else
+ int EXPORT my2_SDL_Has3DNow(void) __attribute__((alias("sdl_No")));
+ int EXPORT my2_SDL_Has3DNowExt(void) __attribute__((alias("sdl_No")));
+ int EXPORT my2_SDL_HasAltiVec(void) __attribute__((alias("sdl_No")));
+@@ -43,6 +56,7 @@ int EXPORT my2_SDL_HasSSE(void) __attribute__((alias("sdl_Yes")));
+ int EXPORT my2_SDL_HasSSE2(void) __attribute__((alias("sdl_Yes")));
+ int EXPORT my2_SDL_HasSSE3(void) __attribute__((alias("sdl_Yes")));
+ int EXPORT my2_SDL_HasSSE41(void) __attribute__((alias("sdl_Yes")));
++#endif
+ int EXPORT my2_SDL_HasSSE42(void) {
+     return BOX64ENV(sse42)?1:0;
+ }
+@@ -52,7 +66,11 @@ int EXPORT my2_SDL_HasAVX(void) {
+ int EXPORT my2_SDL_HasAVX2(void) {
+     return BOX64ENV(avx2)?1:0;
+ }
++#if defined(__APPLE__)
++int EXPORT my2_SDL_HasAVX512F(void) { return sdl_No(); }
++#else
+ int EXPORT my2_SDL_HasAVX512F(void) __attribute__((alias("sdl_No")));
++#endif
+ 
+ typedef struct {
+   int32_t freq;
