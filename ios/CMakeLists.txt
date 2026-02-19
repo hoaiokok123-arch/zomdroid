@@ -14,8 +14,14 @@ if (CMAKE_GENERATOR STREQUAL "Xcode")
 endif()
 
 if (APPLE)
-    # Apple SDKs expose __sincos in math.h, while some imported sources call sincos.
-    add_compile_definitions(sincos=__sincos)
+    # Apple SDKs expose different helper symbols for some GNU math extensions.
+    add_compile_definitions(
+        sincos=__sincos
+        sincosf=__sincosf
+        isnanf=__builtin_isnanf
+        isinff=__builtin_isinff
+        isinf=__builtin_isinf
+    )
 endif()
 
 option(ZOMDROID_IOS_ENABLE_EMULATION "Build in-process box64 linker backend (jailbreak/JIT path)" ON)
